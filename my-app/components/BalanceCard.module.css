@@ -1,0 +1,48 @@
+.balanceCard {
+  background-color: var(--color-balance-card);
+  color: var(--color-text); /* Cor do texto principal do card */
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer; /* Adiciona o cursor de ponteiro para indicar que é clicável */
+}
+
+/* Estilo para o Link que envolve o card */
+.balanceCardLink {
+  text-decoration: none; /* Remove o sublinhado padrão do link */
+  display: block; /* Garante que o link ocupe toda a área do card */
+  border-radius: 12px; /* Garante que o anel de foco siga as bordas arredondadas */
+}
+
+/* Efeito de foco: um anel sutil com a cor primária */
+.balanceCardLink:focus-visible .balanceCard {
+  box-shadow: 0 0 0 3px var(--color-primary);
+}
+
+/* Efeito de hover: elevação e sombra mais forte */
+.balanceCardLink:hover .balanceCard {
+  transform: translateY(-5px); /* Efeito de "elevação" no hover */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Sombra mais pronunciada no hover */
+}
+
+.balanceLabel {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.9;
+  color: var(--color-text);
+}
+
+.balanceCard h1 {
+  margin: 0.5rem 0 0 0;
+  font-size: 2.5rem;
+  /* A fonte Merriweather já é aplicada globalmente, mas podemos ser explícitos se quisermos */
+  font-family: var(--font-merriweather), serif;
+  color: var(--color-balance);
+}

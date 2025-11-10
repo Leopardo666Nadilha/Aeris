@@ -1,0 +1,185 @@
+.container {
+  position: relative; /* 1. Torna este o contêiner de referência para o botão */
+  /* max-width e margin: 0 auto; são agora geridos por .main-content em globals.css */
+}
+
+/* Estilos para o botão de voltar, como era antes */
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+  margin-bottom: 1rem; /* Adiciona um espaço abaixo do botão */
+}
+
+.backButton:hover {
+  color: var(--color-accent);
+}
+
+.title {
+  font-size: 32px;
+  margin-bottom: 2rem;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+/* Seção do formulário */
+.formSection {
+  background-color: var(--color-card-background);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.formSection h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+/* Adicionando responsividade para o formulário em telas menores */
+@media (max-width: 600px) {
+  .form {
+    flex-direction: column;
+    align-items: stretch; /* Faz os itens ocuparem a largura total */
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.formGroup label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.formGroup input {
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+/* Lista de categorias */
+.categoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.categoryItem {
+  background-color: var(--color-card-background);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.categoryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.categoryInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.categoryName {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.categoryValues {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.categoryActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.actionButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.actionButton:hover {
+  color: var(--color-primary);
+}
+
+.deleteButton:hover {
+  color: #e53e3e; /* Cor vermelha para indicar perigo no hover */
+}
+
+/* Estilos para o formulário de edição inline */
+.editForm {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Alinha os itens ao topo */
+  margin-bottom: 1rem; /* Mantém o mesmo espaçamento que o .categoryHeader */
+}
+
+.editInputsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Espaço entre os inputs */
+  flex-grow: 1; /* Ocupa o espaço disponível */
+}
+
+/* Estilos para os inputs de edição */
+.editInput {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  color: var(--color-text);
+  font-family: var(--font-inter), sans-serif;
+  transition: box-shadow 0.2s ease;
+}
+
+.editInput:focus {
+  outline: none;
+  box-shadow: 0 2px 4px -2px var(--color-primary);
+}
+
+/* Ajusta o primeiro input para se parecer com o título */
+.editInput:first-of-type {
+  font-size: 1.2rem;
+  font-weight: 700;
+  flex-grow: 1; /* Permite que ele ocupe mais espaço */
+}
+
+.editInput[type="number"] {
+  width: 100px; /* Largura fixa para o campo de valor */
+  font-size: 1rem; /* Garante que o input de número tenha o tamanho de fonte padrão */
+  font-weight: 400; /* Reseta o peso da fonte */
+}

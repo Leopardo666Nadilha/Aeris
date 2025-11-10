@@ -1,0 +1,13 @@
+.contentWrapper {
+  width: 100%;
+  margin: 0 auto;
+  /* O max-width é herdado do .main-content em globals.css, mas podemos ser explícitos se necessário */
+}
+
+@media (min-width: 1200px) {
+  .expandableSectionsContainer {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start; /* Impede que os itens se estiquem para ter a mesma altura */
+  }
+}

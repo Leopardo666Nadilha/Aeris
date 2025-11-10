@@ -1,0 +1,94 @@
+/* Efeito "acima" com sombra e bordas arredondadas */
+.expandableSection {
+  background-color: var(--color-balance-card);
+  padding: 1.5rem; /* Adiciona o padding aqui */
+  border-radius: 12px;
+  margin: 1.5rem auto;
+  max-width: 600px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+
+/* Cabeçalho clicável */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem; /* Apenas padding inferior para separar do conteúdo */
+  font-family: var(--font-inter), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+  cursor: pointer; /* Adicionado para indicar que é clicável */
+}
+
+.headerTitle {
+  flex-grow: 1;
+}
+
+/* Novo botão de ícone */
+.toggleButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.toggleButton:hover {
+  color: var(--color-primary);
+}
+
+/* Contêiner do conteúdo expansível */
+.sectionContent {
+  max-height: 0; /* Começa recolhido */
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.25, 0.1, 0.25, 1); /* Animação suave */
+}
+
+/* Classe aplicada quando expandido */
+.sectionContent.expanded {
+  max-height: 1000px; /* Aumentado para um valor bem grande para evitar cortes */
+}
+
+/* Padding interno para o conteúdo */
+.contentInner {
+  /* O padding foi removido para evitar vazamento do botão */
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+
+.contentInner p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Media query para desktop */
+@media (min-width: 1200px) {
+  .expandableSection {
+    flex: 1; /* Faz com que cada seção ocupe o mesmo espaço no container flex */
+    display: flex; /* Transforma a própria seção em um container flex */
+    flex-direction: column; /* Organiza o header e o content em coluna */
+  }
+
+  /* Remove o alinhamento vertical forçado */
+  .sectionContent {
+    display: flex; /* Faz o container do conteúdo ser flexível */
+    flex-direction: column; /* Mantém a direção da coluna */
+    flex-grow: 1; /* Permite que o conteúdo cresça, mas não força a altura */
+  }
+
+  .contentInner {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Empurra o botão para baixo */
+    flex-grow: 1; /* Faz o conteúdo interno crescer para preencher o espaço vertical */
+  }
+}

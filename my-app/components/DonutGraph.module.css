@@ -1,0 +1,37 @@
+.graphContainer {
+  display: flex;
+  flex-direction: column; /* Empilha o gráfico e os detalhes */
+  align-items: center;
+  margin: 2rem auto;
+  position: relative;
+}
+
+.donutSlice {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Efeito de hover apenas em dispositivos que suportam (ex: com mouse) */
+@media (hover: hover) and (pointer: fine) {
+  .donutSlice:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Estilo para a caixa de informação */
+.infoBox {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.infoText {
+  font-size: 1rem;
+  color: var(--color-text);
+  font-family: var(--font-inter), sans-serif;
+  margin: 0;
+}
+
+/* Estilo para o texto em negrito dentro do parágrafo */
+.infoText strong { /* O texto em negrito terá a mesma cor do texto principal */
+  color: var(--color-text);
+}

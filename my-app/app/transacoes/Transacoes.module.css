@@ -1,0 +1,114 @@
+.container {
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 2rem;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.backButton:hover {
+  color: var(--color-accent);
+}
+
+.filterContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.filterContainer label {
+  font-weight: 500;
+}
+
+.monthFilter {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-card-background);
+  color: var(--color-text);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.monthFilter:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.transactionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.transactionItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-card-background);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transactionItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.transactionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.transactionLabel {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.transactionDate {
+  font-size: 0.85rem;
+  color: var(--color-accent);
+}
+
+.expenseValue {
+  font-weight: 700;
+  color: var(--color-balance-negative);
+}
+
+.incomeValue {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.noTransactions {
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: var(--color-card-background);
+  border-radius: 12px;
+  color: var(--color-accent);
+}
+
+.noTransactions p {
+  margin: 0.5rem 0;
+}

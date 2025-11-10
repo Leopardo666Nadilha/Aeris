@@ -1,0 +1,32 @@
+.progressBarContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.progressBarBackground {
+  flex-grow: 1;
+  height: 12px;
+  background-color: var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 6px;
+  transition: width 0.5s ease-out;
+}
+
+/* Nova classe para quando a meta é ultrapassada */
+.exceeded {
+  background-color: #e53e3e; /* Tom de vermelho para alerta */
+}
+
+.progressText {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}

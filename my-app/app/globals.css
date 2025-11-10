@@ -1,0 +1,176 @@
+:root {
+  --color-background: #f5f2ec; /* Bege puxado para o "creme" com toque de calor  */
+  --color-text: #3e3a39; /* Grafite "Café" (Escuro e quente) */
+  --color-text-title: #eae6e3; /* Texto "Pergaminho" (Claro e quente) */
+  --color-primary-rgb: 217, 95, 67; /* RGB para --color-primary */
+  --color-primary: #d95f43; /* Laranja "Terracota" (Para botões e CTAs) */
+  --color-accent: #5a6349; /* Verde "Oliva" (Para detalhes ou subtítulos) */
+  --color-button-background: #2d3748; /* Fundo escuro para botões secundários */
+  --color-button-text: #faf8f5; /* Texto claro para botões secundários */
+  --color-text-compromise: #d95f43; /* Mesma cor primária, porém sem alterar com a mudança de light e dark mode*/
+  --color-card-background: #faf8f5; /* Cor de fundo para os cards no modo claro */
+  --color-footer: #5a6349; /* Cor de fundo para o footer */
+  --color-border: #eae6e3; /* Cor sutil para bordas e divisórias no modo claro */
+  --color-title-footer: #e07a5f; /* Mesma terracota brilhante do dark mode para o footer*/
+  --color-button-portfolio: #2a2726; /* Cor de fundo para os botoes do portfólio no modo claro */
+  --color-balance: #d69e2e; /* Cor dourada para o saldo */
+  --color-balance-card: #eae6e3; /* Cor de fundo para o card de saldo */
+  --color-balance-text: #3e3a39; /* Cor do texto do saldo */
+  --color-balance-negative: #e53e3e; /* Cor vermelha para saldo negativo */
+  --color-donut-no-data: #d0d0d0; /* Cor neutra para o gráfico de donut vazio */
+}
+
+/* Substitui o media query por uma classe .dark para o funcionamento do botão do modo de tema*/
+:root.dark {
+  --color-background: #2d2b29; /* Fundo "Café" (Bem escuro e quente) */
+  --color-text: #eae6e3; /* Texto "Pergaminho" (Claro e quente) */
+  --color-primary-rgb: 224, 122, 95; /* RGB para --color-primary no dark mode */
+  --color-primary: #e07a5f; /* Laranja "Terracota" (Mais brilhante para pop-up) */
+  --color-accent: #8c9a79; /* Verde "Oliva" (Mais claro) */
+  --color-text-title: #eae6e3; /* Mantém a mesma cor para títulos em fundo escuro */
+  --color-card-background: #2a2726; /* Cor de fundo para os cards no modo escuro */
+  --color-border: #3e3a39; /* Cor sutil para bordas e divisórias no modo escuro */
+  --color-button-portfolio: #e07a5f; /* Cor de fundo para os botoes do portfólio no modo escuro */
+  --color-balance: #f6e05e; /* Cor dourada para o saldo */
+  --color-balance-card: #2a2726; /* Cor de fundo para o card de saldo */
+  --color-balance-text: #f5f5f5; /* Cor do texto do saldo */
+  --color-balance-negative: #e53e3e; /* Mantém o mesmo vermelho para destaque */
+  --color-donut-no-data: #505050; /* Cor neutra para o gráfico de donut vazio no dark mode */
+}
+
+body {
+  font-family: var(--font-inter), sans-serif;
+  padding-top: 60px;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  padding-bottom: 90px;
+}
+
+/* Exemplo de uso da fonte Merriweather para títulos */
+h1,
+h2,
+h3 {
+  font-family: var(--font-merriweather), serif;
+}
+
+/* Estilos para o botão de tema */
+.theme-toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: 1.5rem; /* Ajuste o tamanho conforme necessário */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.theme-toggle-button:hover {
+  color: var(--color-primary);
+}
+
+/* Remove o contorno azul padrão do navegador em elementos focados */
+:focus-visible {
+  outline: none;
+}
+
+/* Estilos para o botão de Call-to-Action */
+.cta-button {
+  display: block; /* Faz o botão ocupar a largura disponível */
+  margin-top: 1.5rem; /* Espaço acima do botão */
+  padding: 0.85rem 1.5rem;
+  background-color: var(--color-primary);
+  color: var(
+    --color-text-title
+  ); /* Cor de texto que contrasta bem com a primária */
+  border: 2px solid transparent; /* Adiciona uma borda transparente para evitar que o layout mude no hover */
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+  text-align: center;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.cta-button:hover {
+  background-color: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: none; /* Remove o efeito de elevação anterior */
+}
+
+/* Estilos para o botão destrutivo */
+.destructive-button {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.85rem 1.5rem;
+  background-color: transparent;
+  color: var(--color-balance-negative);
+  border: 2px solid var(--color-balance-negative);
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+  text-align: center;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.destructive-button:hover {
+  background-color: var(--color-balance-negative);
+  color: var(--color-card-background);
+}
+
+
+/* Estilos para a lista de gastos recentes */
+.recent-transactions-list {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recent-transactions-list h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.recent-transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.recent-transaction-item:last-child {
+  border-bottom: none; /* Remove a borda do último item */
+}
+
+.transaction-label {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.transaction-value {
+  font-weight: 600;
+  color: var(--color-balance-negative); /* Cor vermelha para gastos */
+}
+
+/* Estilo para valores de renda */
+.income-value {
+  color: var(--color-accent);
+}
+
+/* Estilos para o conteúdo principal para garantir consistência */
+.main-content {
+  width: 100%;
+  max-width: 1280px; /* Garante que todo o conteúdo principal tenha a largura máxima */
+  margin: 0 auto; /* Centraliza o conteúdo */
+  padding: 1.5rem; /* Adiciona um espaçamento lateral consistente */
+  box-sizing: border-box;
+}

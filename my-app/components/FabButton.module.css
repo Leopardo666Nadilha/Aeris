@@ -1,0 +1,24 @@
+.fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px; /* Tamanho padrão de FAB */
+  height: 56px; /* Tamanho padrão de FAB */
+  border-radius: 50%;
+  background-color: var(--color-primary); /* Usa a cor primária para o FAB */
+  color: var(--color-text-title); /* Cor do texto que contrasta com a primária */
+  border: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 1000; /* Garante que ele fique acima de outros elementos */
+}
+
+.fab:hover {
+  filter: brightness(0.9); /* Levemente mais escuro no hover */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}

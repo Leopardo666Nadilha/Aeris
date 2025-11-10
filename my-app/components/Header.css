@@ -1,0 +1,62 @@
+.app-header {
+  background-color: var(--color-background); /* Usa a cor de fundo do tema */
+  border-bottom: 1px solid var(--color-border); /* Usa a nova variável para a borda */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease; /* Transição suave */
+}
+
+.header-content {
+  width: 100%; /* Garante que ocupe toda a largura do .app-header */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px; /* Altura padrão do header */
+  max-width: 1280px; /* Limita a largura máxima do conteúdo em telas grandes */
+  margin: 0 auto; /* Centraliza o .header-content dentro do .app-header */
+  padding: 0 1.5rem; /* Espaçamento lateral padrão para o conteúdo (24px) */
+  box-sizing: border-box; /* Garante que o padding não aumente a largura total */
+  /* max-width e margin: 0 auto; removidos daqui para que o conteúdo do header
+     se estenda aos extremos da viewport (com padding) */
+}
+
+.logo {
+  flex-shrink: 0; /* Impede que o logo encolha em telas pequenas */
+  flex-grow: 0; /* Impede que o logo cresça */
+  font-size: 1.5rem; /* 24px */
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+
+.navigation {
+  display: flex;
+  align-items: center; /* Alinha o botão de tema com os ícones */
+  gap: 1.5rem; /* 24px de espaço entre os ícones */
+  flex-shrink: 1; /* Permite que a navegação encolha se o espaço for limitado */
+}
+
+.navigation a {
+  font-size: 1.75rem; /* Tamanho maior para ícones */
+  text-decoration: none;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+
+.navigation a:hover {
+  color: var(--color-primary);
+}
+
+/* Media query para telas de desktop */
+@media (min-width: 1280px) {
+  .header-content {
+    padding: 0 2.5rem; /* Aumenta o espaçamento lateral em telas maiores (40px) */
+  }
+}

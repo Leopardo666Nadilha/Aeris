@@ -1,0 +1,96 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Overlay semi-transparente */
+  display: flex;
+  justify-content: center;
+  align-items: flex-end; /* Alinha na parte inferior */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1000; /* Acima do FAB */
+}
+
+.overlayVisible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bottomSheet {
+  background-color: var(--color-background); /* Usa a cor de fundo do app para o sheet */
+  width: 100%;
+  max-width: 600px; /* Largura máxima para telas maiores */
+  max-height: 90vh; /* Permite que o sheet ocupe até 90% da altura da viewport */
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(100%); /* Começa fora da tela */
+  transition: transform 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Adiciona rolagem vertical se o conteúdo exceder a altura máxima */
+  padding: 1.5rem;
+  box-sizing: border-box; /* Inclui padding no cálculo da altura */
+}
+
+.bottomSheetOpen {
+  transform: translateY(0); /* Desliza para cima */
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+  gap: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  background-color: var(--color-border);
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.tabButton.active {
+  background-color: var(--color-card-background);
+  color: var(--color-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.closeButton:hover {
+  color: var(--color-primary);
+}

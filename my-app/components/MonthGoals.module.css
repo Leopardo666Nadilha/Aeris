@@ -1,0 +1,38 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.goalItem {
+  background-color: var(--color-card-background);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.goalInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.goalName {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.goalValues {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+/* Media query para telas menores */
+@media (max-width: 600px) {
+  .goalInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
