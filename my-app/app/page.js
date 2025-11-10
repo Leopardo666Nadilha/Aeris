@@ -3,7 +3,7 @@
 import BalanceCard from '../components/BalanceCard';
 import ExpandableSection from '../components/ExpandableSection';
 import DonutGraph from '../components/DonutGraph';
-import styles from './page.module.css'; // Importa o CSS Module
+import styles from './page.module.css';
 import { useData } from '../lib/DataContext';
 import RecentExpenses from '../components/RecentExpenses';
 import Budgets from '../components/Budgets';
