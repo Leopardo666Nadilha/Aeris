@@ -8,6 +8,10 @@ my-app/node_modules
 # testing
 /coverage
 
+# next.js
+my-app/.next/
+my-app/out/
+
 # production
 /build
 
