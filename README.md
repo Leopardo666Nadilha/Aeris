@@ -2,9 +2,6 @@
 
 An intuitive Progressive Web App (PWA) for personal finance, designed for simple and effective expense tracking and budget management.
 
-![Aeris Dashboard](https://i.imgur.com/YOUR_IMAGE_LINK.png)
-*(Recomendo que você substitua este link por um screenshot do seu app, como o `image_511c24.png`)*
-
 ## About The Project
 
 Aeris is a mobile-first financial tracker that helps users understand their spending habits. It provides a clean dashboard to visualize financial health, easy-to-use tools for tracking income and expenses, and a simple way to set and monitor monthly budgets.
