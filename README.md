@@ -40,7 +40,7 @@ To get a local copy up and running, follow these simple steps.
 
 1.  **Clone the repo**
     ```sh
-    git clone [https://github.com/your-username/aeris.git](https://github.com/your-username/aeris.git)
+    git clone https://github.com/your-username/aeris.git
     ```
 2.  **Navigate to the project directory**
     ```sh
@@ -59,13 +59,3 @@ To get a local copy up and running, follow these simple steps.
     *(or `yarn dev`)*
 
 5.  Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## License
-
-Distributed under the MIT License. See `LICENSE.md` for more information.
-
-## Contact
-
-Leonardo Padilha - [seu-email@exemplo.com](mailto:seu-email@exemplo.com)
-
-Project Link: [https://github.com/your-username/aeris](https://github.com/your-username/aeris)
