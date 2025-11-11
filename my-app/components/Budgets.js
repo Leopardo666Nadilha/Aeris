@@ -10,7 +10,7 @@ const Budgets = () => {
   const goalsForDisplay = categories
     .map(category => {
       const current = transactions
-        .filter(t => t.label === category.name)
+        .filter(t => t.category_name === category.name) // Alterado de t.label para t.category_name
         .reduce((sum, t) => sum + t.value, 0);
       return { ...category, current, progress: category.goal > 0 ? (current / category.goal) : 0 };
     })
@@ -21,7 +21,10 @@ const Budgets = () => {
   const shouldShowMonthGoals = goalsForDisplay.some(goal => goal.goal > 0);
 
   return shouldShowMonthGoals ? (
-    <><MonthGoals goals={goalsForDisplay} transactions={transactions} /><Link href='/dashboard' className='cta-button'>Ver Dashboard Completo</Link></>
+    <>
+      <MonthGoals goals={goalsForDisplay} />
+      <Link href='/dashboard' className='cta-button'>Ver Dashboard Completo</Link>
+    </>
   ) : (
     <>
     <h3>Comece a planejar seus gastos</h3>

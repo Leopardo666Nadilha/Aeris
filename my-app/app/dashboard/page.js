@@ -14,7 +14,7 @@ export default function DashboardPage() {
   // Calcula o progresso para exibir no dashboard
   const categoriesWithProgress = categories.map(category => {
     const current = transactions
-      .filter(t => t.label === category.name)
+      .filter(t => t.category_name === category.name)
       .reduce((sum, t) => sum + t.value, 0);
     return { ...category, current };
   });

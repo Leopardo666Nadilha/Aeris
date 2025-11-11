@@ -106,3 +106,61 @@
 .fullWidthButton {
   width: 100%; /* Faz este botão ocupar toda a largura da linha */
 }
+
+/* Estilos para o formulário dentro do modal */
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.formGroup input {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.error, .success {
+  padding: 0.75rem;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+.error { color: #e53e3e; background-color: rgba(229, 62, 62, 0.1); }
+.success { color: #38a169; background-color: rgba(56, 161, 105, 0.1); }
+
+/* Estilos para o conteúdo e ações do modal de confirmação */
+.modalContent p {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.warningText {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

@@ -1,27 +1,56 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const DataContext = createContext();
 
-// Dados de exemplo que antes estavam na HomePage
-const initialTransactions = [];
-
-// Dados de exemplo para receitas
-const initialIncomes = [];
-
-// Dados de exemplo que antes estavam na BudgetPage
-const initialCategories = [
-  { name: 'Alimentação', goal: 0 },
-  { name: 'Moradia', goal: 0 },
-  { name: 'Transporte', goal: 0 },
-  { name: 'Outros', goal: 0 },
-];
-
 export function DataProvider({ children }) {
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [incomes, setIncomes] = useState(initialIncomes);
-  const [categories, setCategories] = useState(initialCategories);
+  const supabase = createClientComponentClient();
+  const [transactions, setTransactions] = useState([]);
+  const [incomes, setIncomes] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true); // Estado de carregamento
+
+  // Efeito para carregar os dados do usuário quando o componente é montado
+  useEffect(() => {
+    const loadInitialData = async (user) => {
+      setLoading(true);
+      // Carrega categorias, transações e rendas em paralelo
+      const [
+        { data: categoriesData },
+        { data: transactionsData },
+        { data: incomesData }
+      ] = await Promise.all([
+        supabase.from('categories').select('*').eq('user_id', user.id),
+        supabase.from('transactions').select('*').eq('user_id', user.id),
+        supabase.from('incomes').select('*').eq('user_id', user.id)
+      ]);
+
+      setCategories(categoriesData || []);
+      setTransactions(transactionsData || []);
+      setIncomes(incomesData || []);
+      setLoading(false);
+    };
+
+    // Escuta mudanças no estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        // Se o usuário fez login ou a sessão foi carregada, busca os dados
+        if (session?.user) {
+          loadInitialData(session.user);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // Se o usuário fez logout, limpa os dados
+        setTransactions([]);
+        setIncomes([]);
+        setCategories([]);
+      }
+    });
+
+    // Limpa a inscrição quando o componente é desmontado
+    return () => subscription.unsubscribe();
+  }, [supabase]);
 
   // Calcula o saldo dinamicamente
   const balance = useMemo(() => {
@@ -30,40 +59,98 @@ export function DataProvider({ children }) {
     return totalIncomes - totalExpenses;
   }, [incomes, transactions]);
 
-  // Função para adicionar uma nova categoria de orçamento
-  const addCategory = (category) => {
-    setCategories((prev) => [...prev, category]);
+  // --- Funções que interagem com o Supabase ---
+
+  const addTransaction = async (transaction) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert({
+        description: transaction.description,
+        value: transaction.value,
+        category_name: transaction.label, // Mapeia 'label' para a coluna 'category_name'
+        user_id: user.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar transação:', error);
+    } else {
+      setTransactions((prev) => [...prev, data]);
+    }
   };
 
-  // Função para adicionar uma nova transação
-  const addTransaction = (transaction) => {
-    // Adiciona a nova transação à lista existente
-    setTransactions((prev) => [...prev, transaction]);
+  const addIncome = async (income) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('incomes')
+      .insert({ ...income, user_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar renda:', error);
+    } else {
+      setIncomes((prev) => [...prev, data]);
+    }
   };
 
-  // Função para adicionar uma nova receita
-  const addIncome = (income) => {
-    setIncomes((prev) => [...prev, income]);
+  const addCategory = async (category) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ ...category, user_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar categoria:', error);
+    } else {
+      setCategories((prev) => [...prev, data]);
+    }
   };
 
-  // Função para remover uma categoria de orçamento
-  const removeCategory = (categoryName) => {
-    setCategories((prev) => prev.filter(cat => cat.name !== categoryName));
+  const removeCategory = async (categoryName) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const categoryToDelete = categories.find(c => c.name === categoryName);
+    if (!categoryToDelete) return;
+
+    const { error } = await supabase.from('categories').delete().eq('id', categoryToDelete.id);
+
+    if (error) {
+      console.error('Erro ao remover categoria:', error);
+    } else {
+      setCategories((prev) => prev.filter(cat => cat.name !== categoryName));
+    }
   };
 
-  // Função para editar uma categoria de orçamento
-  const updateCategory = (originalName, updatedCategory) => {
-    setCategories((prev) =>
-      prev.map((cat) => (cat.name === originalName ? updatedCategory : cat))
-    );
+  const updateCategory = async (originalName, updatedCategoryData) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-    // Se o nome da categoria mudou, atualize as transações associadas
-    if (originalName !== updatedCategory.name) {
-      setTransactions((prev) =>
-        prev.map((t) =>
-          t.label === originalName ? { ...t, label: updatedCategory.name } : t
-        )
-      );
+    const categoryToUpdate = categories.find(c => c.name === originalName);
+    if (!categoryToUpdate) return;
+
+    const { data, error } = await supabase
+      .from('categories')
+      .update({ name: updatedCategoryData.name, goal: updatedCategoryData.goal })
+      .eq('id', categoryToUpdate.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao atualizar categoria:', error);
+    } else {
+      setCategories((prev) => prev.map((cat) => (cat.id === data.id ? data : cat)));
     }
   };
 
@@ -71,6 +158,7 @@ export function DataProvider({ children }) {
     transactions,
     incomes,
     balance, // Exponha o saldo calculado
+    loading, // Exponha o estado de carregamento
     categories,
     addCategory,
     addTransaction,

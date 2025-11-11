@@ -15,7 +15,7 @@ const RecentExpenses = () => {
           <h3>Últimos Gastos:</h3>
           {transactions.slice(-3).reverse().map((transaction, index) => (
             <div key={index} className="recent-transaction-item">
-              <span className="transaction-label">{transaction.label}</span>
+              <span className="transaction-label">{transaction.description}</span>
               <span className="transaction-value">- {formatCurrency(transaction.value)}</span>
             </div>
           ))}

@@ -4,12 +4,14 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  // desabilite em desenvolvimento para evitar problemas de cache
   disable: process.env.NODE_ENV === 'development',
+  // Configurações para otimizar o build e evitar o aviso de "big strings"
+  runtimeCaching: require('next-pwa/cache'),
+  buildExcludes: [/middleware-manifest\.json$/],
 });
 
 const nextConfig = {
-  // ...outras configurações do seu Next.js
+  swcMinify: true, // Habilita o minificador SWC do Next.js, que é mais rápido
 };
 
 module.exports = withPWA(nextConfig);

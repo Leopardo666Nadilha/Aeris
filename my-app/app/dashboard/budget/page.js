@@ -21,7 +21,7 @@ export default function BudgetPage() {
   // Calcula o gasto atual para cada categoria
   const categoriesWithProgress = categories.map(category => {
     const current = transactions
-      .filter(t => t.label === category.name)
+      .filter(t => t.category_name === category.name)
       .reduce((sum, t) => sum + t.value, 0);
     return { ...category, current };
   });
