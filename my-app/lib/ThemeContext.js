@@ -16,6 +16,21 @@ export function ThemeProvider({ children }) {
     }
   }, []);
 
+  // Efeito para atualizar a meta tag theme-color
+  useEffect(() => {
+    if (typeof window !== 'undefined' && theme) {
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      const rootStyles = getComputedStyle(document.documentElement);
+      const newColor = rootStyles.getPropertyValue('--color-primary').trim();
+
+      if (metaThemeColor && newColor) {
+        metaThemeColor.setAttribute('content', newColor);
+      }
+    }
+    // A dependência 'theme' garante que isso rode toda vez que o tema mudar
+  }, [theme]);
+
+
   // Função para alternar o tema
   const toggleTheme = () => {
     setTheme((prevTheme) => {

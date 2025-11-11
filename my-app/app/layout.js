@@ -24,6 +24,7 @@ const merriweather = Merriweather({
 export const metadata = {
   title: 'Aeris Finanças',
   description: 'Seu app de finanças pessoais.',
+  themeColor: '#d95f43',
 };
 
 export default function RootLayout({ children }) {
