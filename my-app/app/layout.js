@@ -24,6 +24,10 @@ const merriweather = Merriweather({
 export const metadata = {
   title: 'Aeris Finanças',
   description: 'Seu app de finanças pessoais.',
+};
+
+// Adicione este novo objeto 'viewport' exportado
+export const viewport = {
   themeColor: '#d95f43',
 };
 

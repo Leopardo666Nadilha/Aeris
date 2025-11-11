@@ -1,7 +1,7 @@
 'use client';
 
 import { CurrencyProvider } from './CurrencyContext';
-import { DataProvider } from '../lib/DataContext'; // Ajuste o caminho se necessário
+import { DataProvider } from '../lib/DataContext';
 
 export function AppProviders({ children }) {
   return (
