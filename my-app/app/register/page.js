@@ -4,24 +4,47 @@ import { useState } from 'react';
 import Link from 'next/link';
 import styles from './Register.module.css';
 import { useRouter } from 'next/navigation';
+import { supabase } from '../../lib/supabase'; // Importe o cliente Supabase
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
+    setError('');
+
     if (password !== confirmPassword) {
-      alert('As senhas não coincidem!');
+      setError('As senhas não coincidem!');
       return;
     }
-    // Lógica de registro aqui
-    console.log('Name:', name, 'Email:', email, 'Password:', password);
-    // Redireciona para o dashboard após o registro (simulação)
-    router.push('/dashboard');
+
+    setLoading(true);
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      alert('Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta.');
+      router.push('/login'); // Redireciona para o login após o cadastro
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,8 +94,23 @@ export default function RegisterPage() {
               placeholder="Crie uma senha"
             />
           </div>
-          <button type="submit" className="cta-button">
-            Cadastrar
+          <div className={styles.inputGroup}>
+            <label htmlFor="confirmPassword" className={styles.label}>
+              Confirmar Senha
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+              className={styles.input}
+              placeholder="Confirme sua senha"
+            />
+          </div>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+          <button type="submit" className="cta-button" disabled={loading}>
+            {loading ? 'Cadastrando...' : 'Cadastrar'}
           </button>
         </form>
         <p className={styles.loginText}>
