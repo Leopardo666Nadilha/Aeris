@@ -59,5 +59,21 @@ export default function manifest() {
         type: 'image/png',
       },
     ],
+    screenshots: [
+      {
+        src: '/screenshots/desktop_screenshot_1.png',
+        sizes: '1474x720',
+        type: 'image/png',
+        form_factor: 'wide',
+        label: 'Visualize suas finanças no desktop',
+      },
+      {
+        src: '/screenshots/mobile_screenshot_1.png',
+        sizes: '362x828',
+        type: 'image/png',
+        form_factor: 'narrow',
+        label: 'Acesse suas finanças em qualquer lugar',
+      },
+    ],
   };
 }
