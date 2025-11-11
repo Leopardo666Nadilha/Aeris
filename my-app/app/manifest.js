@@ -5,8 +5,8 @@ export default function manifest() {
     description: 'Seu app de finanças pessoais, simples e direto.',
     start_url: '/',
     display: 'standalone', // Abre como um app nativo
-    background_color: 'var(--color-background)', // Cor de fundo da splash screen
-    theme_color: 'var(--color-primary)', // Cor principal da sua marca
+    background_color: '#f5f2ec', // Cor de fundo da splash screen
+    theme_color: '#d95f43', // Cor principal
     icons: [
       {
         src: '/icons/icon-192x192.png',
