@@ -19,9 +19,11 @@ export async function POST(request) {
     );
   }
 
+  // Esta linha é crucial: ela atualiza a sessão no lado do servidor, garantindo que o middleware a reconheça nas requisições seguintes.
+  await supabase.auth.getSession();
+
   return NextResponse.json({
     message: 'Login realizado com sucesso!',
     user: data.user,
   });
 }
-
