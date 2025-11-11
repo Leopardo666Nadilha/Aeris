@@ -39,12 +39,12 @@ export default function manifest() {
         type: 'image/png',
       },
       {
-        src: '/icons/ios/192.png', // Para compatibilidade geral
+        src: '/icons/ios/192.png', // Para compatibilidade geral, se não for o mesmo que android-192
         sizes: '192x192',
         type: 'image/png',
       },
       {
-        src: '/icons/windows11/Square150x150Logo.scale-200.png', // Para Windows
+        src: '/icons/windows11/Square150x150Logo.scale-200.png', // Exemplo para Windows
         sizes: '300x300',
         type: 'image/png',
       },
