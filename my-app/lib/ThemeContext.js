@@ -1,53 +1,49 @@
 'use client';
 
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(null); // Estado para armazenar o tema atual
-
-  // Efeito para carregar o tema salvo no localStorage e aplicar a classe no HTML
-  useEffect(() => {
+  // Inicializa o estado do tema lendo do DOM (que já foi setado pelo ThemeScript)
+  // ou um valor padrão para SSR.
+  const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const root = document.documentElement;
-      const initialTheme = root.classList.contains('dark') ? 'dark' : 'light';
-      setTheme(initialTheme);
+      // Lê a classe aplicada pelo ThemeScript ou assume 'dark' como padrão
+      return root.classList.contains('dark') ? 'dark' : 'light';
     }
-  }, []);
+    return 'dark'; // Tema padrão para SSR ou quando window não está disponível
+  });
 
-  // Efeito para atualizar a meta tag theme-color
+  // Este efeito lida com todos os efeitos colaterais quando o estado 'theme' muda
   useEffect(() => {
-    if (typeof window !== 'undefined' && theme) {
+    if (typeof window !== 'undefined' && theme) { // Garante que estamos no cliente e o tema está definido
+      const root = document.documentElement;
       const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-      const rootStyles = getComputedStyle(document.documentElement);
-      const newColor = rootStyles.getPropertyValue('--color-primary').trim();
 
+      // 1. Atualiza a classe no elemento <html>
+      root.classList.remove('light', 'dark');
+      root.classList.add(theme);
+
+      // 2. Atualiza a meta tag theme-color
+      const rootStyles = getComputedStyle(root); // Pega os estilos computados APÓS a classe ser aplicada
+      const newColor = rootStyles.getPropertyValue('--color-primary').trim();
       if (metaThemeColor && newColor) {
         metaThemeColor.setAttribute('content', newColor);
       }
-    }
-    // A dependência 'theme' garante que isso rode toda vez que o tema mudar
-  }, [theme]);
 
-
-  // Função para alternar o tema
-  const toggleTheme = () => {
-    setTheme((prevTheme) => {
-      const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-
-      // 1. Faça a mudança visual (A parte principal do INP)
-      document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(newTheme);
-
-      // 2. ADIE a escrita em disco para o próximo "tick" do navegador.
+      // 3. Salva a preferência no localStorage (adiado para otimização de INP)
       setTimeout(() => {
-        localStorage.setItem('theme', newTheme);
+        localStorage.setItem('theme', theme);
       }, 0);
+    }
+  }, [theme]); // Este efeito será reexecutado sempre que o estado 'theme' mudar
 
-      return newTheme;
-    });
-  };
+  // Função para alternar o tema - agora ela apenas atualiza o estado
+  const toggleTheme = useCallback(() => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  }, []); // useCallback para memorizar a função e evitar re-renderizações desnecessárias
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
