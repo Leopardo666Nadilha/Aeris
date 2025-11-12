@@ -5,7 +5,13 @@ import { useData } from '../lib/DataContext';
 import MonthGoals from './MonthGoals';
 
 const Budgets = () => {
-  const { transactions, budgets } = useData();
+  const { transactions, budgets, loading } = useData();
+
+  // Adiciona uma verificação de carregamento.
+  // Isso impede que o componente tente renderizar antes que os dados estejam prontos.
+  if (loading) {
+    return <p>Carregando metas...</p>;
+  }
 
   const goalsForDisplay = budgets
     .filter(budget => budget.budget_value > 0) // Mostra apenas metas com valor definido

@@ -39,6 +39,7 @@ export function DataProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         // Se há uma sessão (após login ou no carregamento inicial da página),
+        setLoading(true); // Define o carregamento para 'true' antes de buscar novos dados
         // carregamos os dados. A função `loadInitialData` já define `setLoading(false)` no final.
         loadInitialData(session.user);
       } else {
@@ -274,3 +275,4 @@ export function DataProvider({ children }) {
 export function useData() {
   return useContext(DataContext);
 }
+ 
