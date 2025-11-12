@@ -5,7 +5,6 @@
   min-height: calc(
     100vh - 60px - 90px
   ); /* Viewport height - header - footer */
-  padding: 2rem;
 }
 
 .registerBox {

@@ -100,6 +100,47 @@ export function DataProvider({ children }) {
     }
   };
 
+  const removeTransaction = async (transactionId) => {
+    const { error } = await supabase.from('transactions').delete().eq('id', transactionId);
+    if (error) {
+      console.error('Erro ao remover transação:', error);
+    } else {
+      setTransactions(prev => prev.filter(t => t.id !== transactionId));
+    }
+  };
+
+  const updateTransaction = async (transactionId, updatedData) => {
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(updatedData)
+      .eq('id', transactionId)
+      .select()
+      .single();
+    if (error) {
+      console.error('Erro ao atualizar transação:', error);
+    } else {
+      setTransactions(prev => prev.map(t => (t.id === transactionId ? data : t)));
+    }
+  };
+
+  const removeIncome = async (incomeId) => {
+    const { error } = await supabase.from('incomes').delete().eq('id', incomeId);
+    if (error) {
+      console.error('Erro ao remover renda:', error);
+    } else {
+      setIncomes(prev => prev.filter(i => i.id !== incomeId));
+    }
+  };
+
+  const updateIncome = async (incomeId, updatedData) => {
+    const { data, error } = await supabase.from('incomes').update(updatedData).eq('id', incomeId).select().single();
+    if (error) {
+      console.error('Erro ao atualizar renda:', error);
+    } else {
+      setIncomes(prev => prev.map(i => (i.id === incomeId ? data : i)));
+    }
+  };
+
   const addCategory = async (category) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -165,6 +206,10 @@ export function DataProvider({ children }) {
     removeCategory,
     updateCategory,
     addIncome,
+    updateTransaction,
+    removeTransaction,
+    updateIncome,
+    removeIncome,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

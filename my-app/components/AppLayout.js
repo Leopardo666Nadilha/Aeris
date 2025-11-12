@@ -12,7 +12,7 @@ export default function AppLayout({ children }) {
   const pathname = usePathname(); // 2. Obtenha a rota atual
 
   // 3. Defina as rotas onde os componentes NÃO devem aparecer
-  const excludedPaths = ['/perfil'];
+  const excludedPaths = ['/perfil', '/login', '/register'];
 
   // 4. Verifique se a rota atual está na lista de exclusão
   const shouldShowComponents = !excludedPaths.includes(pathname);

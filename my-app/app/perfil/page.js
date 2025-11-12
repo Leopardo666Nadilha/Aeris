@@ -324,7 +324,7 @@ export default function PerfilPage() {
           <p>Você tem certeza que deseja sair da sua conta?</p>
           {error && <p className={styles.error}>{error}</p>}
           <div className={styles.modalActions}>
-            <button onClick={() => setIsLogoutModalOpen(false)} className="secondary-button">
+            <button onClick={() => setIsLogoutModalOpen(false)} className={`${styles.modalButton} ${styles.cancelButton}`}>
               Cancelar
             </button>
             <button onClick={handleLogout} className="cta-button" disabled={isLoading}>
@@ -342,10 +342,10 @@ export default function PerfilPage() {
       >
         <form onSubmit={handleDeleteAccount} className={styles.modalForm}>
           <p className={styles.warningText}>
-            <strong>Atenção:</strong> Esta ação é irreversível. Todos os seus dados, incluindo transações e saldos, serão apagados para sempre.
+            <strong>Atenção:</strong> Esta ação é irreversível. Todos os seus dados, incluindo transações e saldos, serão apagados permanentemente.
           </p>
           <p className={styles.warningText}>
-            Para confirmar, por favor, digite sua senha nos dois campos abaixo.
+            Para confirmar, por favor, confirme sua senha nos campos abaixo.
           </p>
           <div className={styles.formGroup}>
             <label htmlFor="delete-password-1">Senha</label>

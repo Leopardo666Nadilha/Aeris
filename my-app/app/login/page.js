@@ -45,9 +45,9 @@ export default function LoginPage() {
   };
 
   return (
-    <main className={styles.container}>
+    <section className={styles.container}>
       <div className={styles.formContainer}>
-        <h1 className={styles.title}>Bem-vindo de volta!</h1>
+        <h1 className={styles.title}>Bem-vindo ao Aeris Finanças!</h1>
         <p className={styles.subtitle}>Acesse sua conta para continuar.</p>
         <form onSubmit={handleLogin} className={styles.form}>
           <div className={styles.formGroup}>
@@ -72,6 +72,6 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

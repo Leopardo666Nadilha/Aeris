@@ -84,8 +84,9 @@
 }
 
 .bannerValue {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
+  padding: 0 0.5rem; /* Adiciona um pequeno espaço à direita */
 }
 
 .actionButtons {
@@ -163,4 +164,34 @@
   color: var(--color-text-secondary);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+/* Estilos para os botões dentro dos modais */
+.modalActions {
+  display: flex;
+  justify-content: center;
+  gap: 10px; /* Espaçamento entre os botões */
+  margin-top: 20px;
+}
+
+.modalButton {
+  padding: 13.6px 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  border: 2px solid var(--color-border); /* Borda padrão */
+}
+
+.cancelButton {
+  background-color: var(--color-background); /* Cor de fundo mais clara */
+  color: var(--color-text); /* Cor do texto padrão */
+  border-color: var(--color-border); /* Borda sutil */
+  margin-top: 24px;
+}
+
+.cancelButton:hover {
+  background-color: var(--color-hover-background); /* Efeito hover */
+  border-color: var(--color-primary); /* Borda primária no hover */
 }

@@ -5,4 +5,5 @@ export const donutGraphColors = [
   "#8C2D2D",
   "#6A7B9C",
   "#7B5E4F",
+  "#A0AEC0",
 ];

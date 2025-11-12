@@ -59,12 +59,12 @@ export default function DonutGraph({ data }) {
       .data(data_ready)
       .enter()
       .append('path')
-      .attr('d', (d) => (selectedSlice && selectedSlice.label === d.data.label ? arcSelected(d) : arc(d)))
-      .attr('fill', (d) => color(d.data.label))
+      .attr('d', (d) => (selectedSlice && selectedSlice.category_name === d.data.category_name ? arcSelected(d) : arc(d)))
+      .attr('fill', (d) => color(d.data.category_name))
       .attr('class', styles.donutSlice)
       .on('click', (event, d) => {
         // Alterna a seleção da fatia
-        if (selectedSlice && selectedSlice.label === d.data.label) {
+        if (selectedSlice && selectedSlice.category_name === d.data.category_name) {
           setSelectedSlice(null);
         } else {
           setSelectedSlice(d.data);
@@ -93,7 +93,7 @@ export default function DonutGraph({ data }) {
           selectedSlice ? (
             // Se uma fatia está selecionada e há gastos
             <p className={styles.infoText}>
-              Gastos com <strong>{selectedSlice.label}</strong>: {formatCurrency(selectedSlice.value)}
+              Gastos com <strong>{selectedSlice.category_name}</strong>: {formatCurrency(selectedSlice.value)}
             </p>
           ) : (
             // Caso contrário (há gastos, mas nenhuma fatia selecionada), mostra o total
