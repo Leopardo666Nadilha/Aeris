@@ -9,60 +9,60 @@ import Link from 'next/link';
 import ProgressBar from '../../../components/ProgressBar';
 
 export default function BudgetPage() {
-  const { categories, transactions, addCategory, removeCategory, updateCategory } = useData();
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryGoal, setNewCategoryGoal] = useState('');
+  const { budgets, transactions, addBudget, removeBudget, updateBudget } = useData();
+  const [newBudgetName, setNewBudgetName] = useState('');
+  const [newBudgetGoal, setNewBudgetGoal] = useState('');
 
   // Estado para controlar a edição inline
-  const [editingCategory, setEditingCategory] = useState(null); // Armazena o nome da categoria em edição
-  const [editedName, setEditedName] = useState('');
-  const [editedGoal, setEditedGoal] = useState('');
+  const [editingBudget, setEditingBudget] = useState(null); // Armazena o ID do orçamento em edição
+  const [editedBudgetName, setEditedBudgetName] = useState('');
+  const [editedBudgetGoal, setEditedBudgetGoal] = useState('');
 
   // Calcula o gasto atual para cada categoria
-  const categoriesWithProgress = categories.map(category => {
+  const budgetsWithProgress = budgets.map(budget => {
     const current = transactions
-      .filter(t => t.category_name === category.name)
+      .filter(t => t.category_name === budget.category_name)
       .reduce((sum, t) => sum + t.value, 0);
-    return { ...category, current };
+    return { ...budget, current };
   });
 
-  const handleAddCategory = (e) => {
+  const handleAddBudget = (e) => {
     e.preventDefault();
-    if (!newCategoryName || !newCategoryGoal || parseFloat(newCategoryGoal) <= 0) {
+    if (!newBudgetName || !newBudgetGoal || parseFloat(newBudgetGoal) <= 0) {
       alert('Por favor, preencha o nome e um valor de meta válido.');
       return;
     }
 
-    const newCategory = {
-      name: newCategoryName,
-      goal: parseFloat(newCategoryGoal),
+    const newBudget = {
+      category_name: newBudgetName,
+      budget_value: parseFloat(newBudgetGoal),
     };
 
-    addCategory(newCategory);
+    addBudget(newBudget);
 
-    setNewCategoryName('');
-    setNewCategoryGoal('');
+    setNewBudgetName('');
+    setNewBudgetGoal('');
   };
 
-  const handleStartEdit = (category) => {
-    setEditingCategory(category.name);
-    setEditedName(category.name);
-    setEditedGoal(category.goal.toString());
+  const handleStartEdit = (budget) => {
+    setEditingBudget(budget.id);
+    setEditedBudgetName(budget.category_name);
+    setEditedBudgetGoal(budget.budget_value.toString());
   };
 
   const handleCancelEdit = () => {
-    setEditingCategory(null);
+    setEditingBudget(null);
   };
 
-  const handleSaveEdit = (originalName) => {
-    if (!editedName || !editedGoal || parseFloat(editedGoal) < 0) {
+  const handleSaveEdit = (budgetId) => {
+    if (!editedBudgetName || !editedBudgetGoal || parseFloat(editedBudgetGoal) < 0) {
       alert('Por favor, preencha um nome e um valor de meta válido.');
       return;
     }
 
-    const updatedCategory = { name: editedName, goal: parseFloat(editedGoal) };
-    updateCategory(originalName, updatedCategory);
-    setEditingCategory(null);
+    const updatedBudgetData = { category_name: editedBudgetName, budget_value: parseFloat(editedBudgetGoal) };
+    updateBudget(budgetId, updatedBudgetData);
+    setEditingBudget(null);
   };
 
   return (
@@ -76,25 +76,25 @@ export default function BudgetPage() {
 
       {/* Seção para adicionar nova categoria */}
       <section className={styles.formSection}>
-        <h2>Adicionar Nova Categoria</h2>
-        <form onSubmit={handleAddCategory} className={styles.form}>
+        <h2>Adicionar Nova Meta</h2>
+        <form onSubmit={handleAddBudget} className={styles.form}>
           <div className={styles.formGroup}>
-            <label htmlFor="categoryName">Nome da Categoria</label>
+            <label htmlFor="budgetName">Nome da Categoria</label>
             <input
               type="text"
-              id="categoryName"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
+              id="budgetName"
+              value={newBudgetName}
+              onChange={(e) => setNewBudgetName(e.target.value)}
               placeholder="Ex: Educação"
             />
           </div>
           <div className={styles.formGroup}>
-            <label htmlFor="categoryGoal">Meta Mensal (R$)</label>
+            <label htmlFor="budgetGoal">Meta Mensal (R$)</label>
             <input
               type="number"
-              id="categoryGoal"
-              value={newCategoryGoal}
-              onChange={(e) => setNewCategoryGoal(e.target.value)}
+              id="budgetGoal"
+              value={newBudgetGoal}
+              onChange={(e) => setNewBudgetGoal(e.target.value)}
               placeholder="Ex: 500"
             />
           </div>
@@ -104,29 +104,29 @@ export default function BudgetPage() {
 
       {/* Lista de categorias com metas */}
       <section className={styles.categoryList}>
-        {categoriesWithProgress.map((category) => (
-          <div key={category.name} className={styles.categoryItem}>
-            {editingCategory === category.name ? (
+        {budgetsWithProgress.map((budget) => (
+          <div key={budget.id} className={styles.categoryItem}>
+            {editingBudget === budget.id ? (
               // --- MODO DE EDIÇÃO ---
               <>
                 <div className={styles.editForm}>
                   <div className={styles.editInputsWrapper}>
                     <input
                       type="text"
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
+                      value={editedBudgetName}
+                      onChange={(e) => setEditedBudgetName(e.target.value)}
                       className={styles.editInput}
                     />
                     <input
                       type="number"
-                      value={editedGoal}
-                      onChange={(e) => setEditedGoal(e.target.value)}
+                      value={editedBudgetGoal}
+                      onChange={(e) => setEditedBudgetGoal(e.target.value)}
                       className={styles.editInput}
                       placeholder="Meta"
                     />
                   </div>
                   <div className={styles.categoryActions}>
-                    <button onClick={() => handleSaveEdit(category.name)} className={styles.actionButton}>
+                    <button onClick={() => handleSaveEdit(budget.id)} className={styles.actionButton}>
                       <FaSave />
                     </button>
                     <button onClick={handleCancelEdit} className={`${styles.actionButton} ${styles.deleteButton}`}>
@@ -140,21 +140,21 @@ export default function BudgetPage() {
               <>
                 <div className={styles.categoryHeader}>
                   <div className={styles.categoryInfo}>
-                    <span className={styles.categoryName}>{category.name}</span>
+                    <span className={styles.categoryName}>{budget.category_name}</span>
                     <span className={styles.categoryValues}>
-                      R$ {category.current.toFixed(2)} / R$ {category.goal.toFixed(2)}
+                      R$ {budget.current.toFixed(2)} / R$ {budget.budget_value.toFixed(2)}
                     </span>
                   </div>
                   <div className={styles.categoryActions}>
-                    <button onClick={() => handleStartEdit(category)} className={styles.actionButton}>
+                    <button onClick={() => handleStartEdit(budget)} className={styles.actionButton}>
                       <FaPencilAlt />
                     </button>
-                    <button onClick={() => removeCategory(category.name)} className={`${styles.actionButton} ${styles.deleteButton}`}>
+                    <button onClick={() => removeBudget(budget.id)} className={`${styles.actionButton} ${styles.deleteButton}`}>
                       <FaTrash />
                     </button>
                   </div>
                 </div>
-                <ProgressBar current={category.current} goal={category.goal} />
+                <ProgressBar current={budget.current} goal={budget.budget_value} />
               </>
             )}
           </div>

@@ -199,6 +199,53 @@ export function DataProvider({ children }) {
     }
   };
 
+  // --- Funções CRUD para a tabela 'budgets' ---
+
+  const addBudget = async (budgetData) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('budgets')
+      .insert({ ...budgetData, user_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar orçamento:', error);
+    } else {
+      setBudgets((prev) => [...prev, data]);
+    }
+  };
+
+  const removeBudget = async (budgetId) => {
+    const { error } = await supabase.from('budgets').delete().eq('id', budgetId);
+
+    if (error) {
+      console.error('Erro ao remover orçamento:', error);
+    } else {
+      setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
+    }
+  };
+
+  const updateBudget = async (budgetId, updatedData) => {
+    const { data, error } = await supabase
+      .from('budgets')
+      .update(updatedData)
+      .eq('id', budgetId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao atualizar orçamento:', error);
+    } else {
+      // Atualiza o estado local com os novos dados do orçamento
+      setBudgets((prev) =>
+        prev.map((budget) => (budget.id === budgetId ? data : budget))
+      );
+    }
+  };
+
   const value = {
     transactions,
     incomes,
@@ -214,6 +261,10 @@ export function DataProvider({ children }) {
     removeTransaction,
     updateIncome,
     removeIncome,
+    budgets, // Expõe os orçamentos
+    addBudget,
+    updateBudget,
+    removeBudget,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

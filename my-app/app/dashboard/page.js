@@ -8,15 +8,15 @@ import { useCurrency } from '@/contexts/CurrencyContext'; // Importa o hook de m
 import { IoIosArrowBack } from 'react-icons/io';
 
 export default function DashboardPage() {
-  const { categories, transactions } = useData();
+  const { budgets, transactions } = useData();
   const { formatCurrency } = useCurrency(); // Obtém a função de formatação
 
   // Calcula o progresso para exibir no dashboard
-  const categoriesWithProgress = categories.map(category => {
+  const budgetsWithProgress = budgets.map(budget => {
     const current = transactions
-      .filter(t => t.category_name === category.name)
+      .filter(t => t.category_name === budget.category_name)
       .reduce((sum, t) => sum + t.value, 0);
-    return { ...category, current };
+    return { ...budget, current };
   });
 
   return (
@@ -28,7 +28,7 @@ export default function DashboardPage() {
       </Link>
       <h1 className={styles.title}>Dashboard de Metas e Orçamentos</h1>
 
-      {categories.length === 0 ? (
+      {budgets.length === 0 ? (
         <>
           <p className={styles.description}>
             Bem-vindo ao seu painel de controle financeiro. Crie orçamentos,
@@ -42,13 +42,13 @@ export default function DashboardPage() {
         <>
           <section className={styles.summarySection}>
             <h2>Resumo do seu Orçamento</h2>
-            {categoriesWithProgress.map((category) => (
-              <div key={category.name} className={styles.summaryItem}>
+            {budgetsWithProgress.map((budget) => (
+              <div key={budget.id} className={styles.summaryItem}>
                 <div className={styles.summaryInfo}>
-                  <span className={styles.summaryCategoryName}>{category.name}</span>
-                  <span className={styles.summaryValues}>{formatCurrency(category.current)} / {formatCurrency(category.goal)}</span>
+                  <span className={styles.summaryCategoryName}>{budget.category_name}</span>
+                  <span className={styles.summaryValues}>{formatCurrency(budget.current)} / {formatCurrency(budget.budget_value)}</span>
                 </div>
-                <ProgressBar current={category.current} goal={category.goal} />
+                <ProgressBar current={budget.current} goal={budget.budget_value} />
               </div>
             ))}
           </section>
