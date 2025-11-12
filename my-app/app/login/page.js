@@ -34,11 +34,11 @@ export default function LoginPage() {
       // A segurança real vem do cookie de sessão, não disso.
       localStorage.setItem('userEmail', data.user.email);
 
-      // Redireciona para o dashboard ou página principal após o login
-      // Usamos router.refresh() em vez de router.push() para forçar
-      // um recarregamento dos Server Components e do estado do DataContext.
-      // Isso garante que o usuário veja a página correta de "logado".
-      router.refresh();
+      // Força um recarregamento completo da página para a rota raiz.
+      // Isso garante que todos os contextos (como o DataContext) sejam
+      // reinicializados do zero com a nova sessão do usuário,
+      // resolvendo o problema de dados zerados e a longa espera.
+      window.location.href = '/';
 
     } catch (err) {
       setError(err.message);

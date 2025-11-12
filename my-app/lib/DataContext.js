@@ -37,22 +37,16 @@ export function DataProvider({ children }) {
 
     // Escuta mudanças no estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // O evento 'INITIAL_SESSION' é disparado no carregamento da página.
-      // O evento 'SIGNED_IN' é disparado logo após o login.
-      // O evento 'SIGNED_OUT' é disparado após o logout.
-
-      // Apenas agimos se tivermos uma sessão com um usuário.
       if (session?.user) {
-        // Se não estivermos no meio de um carregamento, iniciamos um.
-        // A função loadInitialData é responsável por definir setLoading(false) ao final.
-        if (!loading) setLoading(true);
+        // Se há uma sessão (após login ou no carregamento inicial da página),
+        // carregamos os dados. A função `loadInitialData` já define `setLoading(false)` no final.
         loadInitialData(session.user);
-      } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
-        // Se o evento for SIGNED_OUT, ou se a sessão inicial não tiver usuário,
-        // garantimos que os dados sejam limpos e o carregamento seja finalizado.
+      } else {
+        // Se não há sessão (logout ou estado inicial sem usuário),
+        // limpamos os dados e paramos o carregamento.
         setTransactions([]);
         setIncomes([]);
-        setBudgets([]);
+        setBudgets([]); // Limpa os orçamentos
         setCategories([]);
         setLoading(false);
       }
