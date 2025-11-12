@@ -56,7 +56,7 @@ export function DataProvider({ children }) {
         setCategories([]);
         setLoading(false); // Se não há sessão, para de carregar.
       }
-    };
+    });
 
     // Limpa a inscrição quando o componente é desmontado
     return () => subscription.unsubscribe();
