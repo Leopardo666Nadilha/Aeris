@@ -10,6 +10,7 @@ export function DataProvider({ children }) {
   const [transactions, setTransactions] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [budgets, setBudgets] = useState([]); // Estado para orçamentos
   const [loading, setLoading] = useState(true); // Estado de carregamento
 
   // Efeito para carregar os dados do usuário quando o componente é montado
@@ -20,16 +21,19 @@ export function DataProvider({ children }) {
       const [
         { data: categoriesData },
         { data: transactionsData },
-        { data: incomesData }
+        { data: incomesData },
+        { data: budgetsData } // Adiciona o carregamento de budgets
       ] = await Promise.all([
         supabase.from('categories').select('*').eq('user_id', user.id),
         supabase.from('transactions').select('*').eq('user_id', user.id),
-        supabase.from('incomes').select('*').eq('user_id', user.id)
+        supabase.from('incomes').select('*').eq('user_id', user.id),
+        supabase.from('budgets').select('*').eq('user_id', user.id) // Busca os orçamentos
       ]);
 
       setCategories(categoriesData || []);
       setTransactions(transactionsData || []);
       setIncomes(incomesData || []);
+      setBudgets(budgetsData || []); // Define os orçamentos
       setLoading(false);
     };
 
@@ -37,16 +41,29 @@ export function DataProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         // Se o usuário fez login ou a sessão foi carregada, busca os dados
-        if (session?.user) {
-          loadInitialData(session.user);
-        }
+        if (session?.user) loadInitialData(session.user);
       } else if (event === 'SIGNED_OUT') {
         // Se o usuário fez logout, limpa os dados
         setTransactions([]);
         setIncomes([]);
+        setBudgets([]); // Limpa os orçamentos
         setCategories([]);
+        setLoading(false); // Garante que o estado de loading seja resetado
       }
     });
+
+    // **A OTIMIZAÇÃO PRINCIPAL ESTÁ AQUI**
+    // Verifica a sessão ativa assim que o DataProvider é montado.
+    // Isso é mais rápido do que esperar pelo evento 'INITIAL_SESSION'.
+    const checkActiveSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        loadInitialData(session.user);
+      } else {
+        setLoading(false); // Se não há sessão, para de carregar.
+      }
+    };
+    checkActiveSession();
 
     // Limpa a inscrição quando o componente é desmontado
     return () => subscription.unsubscribe();
