@@ -94,8 +94,8 @@ export default function BottomSheet({ isOpen, onClose, categories, onSaveTransac
               <label htmlFor="expense-category">Categoria</label>
               <select id="expense-category" name="category" required>
                 <option value="">Selecione...</option>
-                {categories.map((cat) => (
-                  <option key={cat.name} value={cat.name}>{cat.name}</option>
+                {categories.map((budget) => (
+                  <option key={budget.id} value={budget.category_name}>{budget.category_name}</option>
                 ))}
               </select>
             </div>

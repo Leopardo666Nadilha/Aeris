@@ -8,7 +8,7 @@ import BottomSheet from './BottomSheet';
 
 export default function AppLayout({ children }) {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const { categories, addTransaction, addIncome } = useData(); // Obtenha os dados e as funções do contexto
+  const { budgets, addTransaction, addIncome } = useData(); // Obtenha os dados e as funções do contexto
   const pathname = usePathname(); // 2. Obtenha a rota atual
 
   // 3. Defina as rotas onde os componentes NÃO devem aparecer
@@ -28,7 +28,7 @@ export default function AppLayout({ children }) {
           <BottomSheet
             isOpen={isBottomSheetOpen}
             onClose={() => setIsBottomSheetOpen(false)}
-            categories={categories}
+            categories={budgets} // Passa a lista de budgets como categorias
             onSaveTransaction={addTransaction}
             onSaveIncome={addIncome}
           />
