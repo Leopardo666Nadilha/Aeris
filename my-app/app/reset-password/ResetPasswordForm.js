@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import styles from '../login/Login.module.css'; // Reutilizando o estilo
+import styles from '../login/Login.module.css';
 
 export default function ResetPasswordForm() {
   const router = useRouter();
