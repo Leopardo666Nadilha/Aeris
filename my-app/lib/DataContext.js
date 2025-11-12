@@ -39,31 +39,24 @@ export function DataProvider({ children }) {
 
     // Escuta mudanças no estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // O evento 'INITIAL_SESSION' é disparado no carregamento da página se já houver uma sessão.
+      // O evento 'SIGNED_IN' é disparado logo após o login.
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        // Se o usuário fez login ou a sessão foi carregada, busca os dados
-        if (session?.user) loadInitialData(session.user);
+        if (session?.user) {
+          loadInitialData(session.user);
+        } else {
+          // Se não houver sessão (por exemplo, usuário nunca logou), paramos o carregamento.
+          setLoading(false);
+        }
       } else if (event === 'SIGNED_OUT') {
         // Se o usuário fez logout, limpa os dados
         setTransactions([]);
         setIncomes([]);
         setBudgets([]); // Limpa os orçamentos
         setCategories([]);
-        setLoading(false); // Garante que o estado de loading seja resetado
-      }
-    });
-
-    // **A OTIMIZAÇÃO PRINCIPAL ESTÁ AQUI**
-    // Verifica a sessão ativa assim que o DataProvider é montado.
-    // Isso é mais rápido do que esperar pelo evento 'INITIAL_SESSION'.
-    const checkActiveSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        loadInitialData(session.user);
-      } else {
         setLoading(false); // Se não há sessão, para de carregar.
       }
     };
-    checkActiveSession();
 
     // Limpa a inscrição quando o componente é desmontado
     return () => subscription.unsubscribe();
