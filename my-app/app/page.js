@@ -10,7 +10,18 @@ import Budgets from '../components/Budgets';
 import RecentIncomes from '../components/RecentIncomes';
 
 export default function HomePage() {
-  const { transactions } = useData();
+  const { transactions, loading } = useData(); // 1. Obtenha o estado 'loading' do contexto
+
+  // 2. Se os dados ainda estiverem carregando, exiba um indicador de carregamento.
+  //    Isso impede que os componentes filhos renderizem com dados vazios.
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Carregando seus dados...</p>
+      </div>
+    );
+  }
 
   // 1. Agrupar transações por categoria
   let aggregated = transactions.reduce((acc, transaction) => {

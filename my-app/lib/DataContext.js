@@ -199,7 +199,7 @@ export function DataProvider({ children }) {
     transactions,
     incomes,
     balance, // Exponha o saldo calculado
-    loading, // Exponha o estado de carregamento
+    loading, // Garante que o estado de carregamento seja exposto
     categories,
     addCategory,
     addTransaction,
