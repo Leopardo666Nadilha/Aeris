@@ -16,7 +16,6 @@ export function DataProvider({ children }) {
   // Efeito para carregar os dados do usuário quando o componente é montado
   useEffect(() => {
     const loadInitialData = async (user) => {
-      // Carrega categorias, transações e rendas em paralelo
       const [
         { data: categoriesData },
         { data: transactionsData },
@@ -38,25 +37,13 @@ export function DataProvider({ children }) {
 
     // Escuta mudanças no estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Define o carregamento como true sempre que o estado de autenticação mudar,
-      // garantindo que a UI espere pelos dados.
-      setLoading(true);
-
-      // O evento 'INITIAL_SESSION' é disparado no carregamento da página se já houver uma sessão.
-      // O evento 'SIGNED_IN' é disparado logo após o login.
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        if (session?.user) {
-          loadInitialData(session.user);
-        } else {
-          // Se não houver sessão (ex: na página de login), limpa os dados e para de carregar.
-          setTransactions([]);
-          setIncomes([]);
-          setBudgets([]);
-          setCategories([]);
-          setLoading(false);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        // Se o usuário fez logout, limpa os dados
+      if (session?.user) {
+        // Se há uma sessão (após login ou no carregamento inicial da página),
+        // carregamos os dados. A função `loadInitialData` já define `setLoading(false)` no final.
+        loadInitialData(session.user);
+      } else {
+        // Se não há sessão (logout ou estado inicial sem usuário),
+        // limpamos os dados e paramos o carregamento.
         setTransactions([]);
         setIncomes([]);
         setBudgets([]); // Limpa os orçamentos
