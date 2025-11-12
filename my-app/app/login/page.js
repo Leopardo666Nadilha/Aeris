@@ -70,8 +70,14 @@ export default function LoginPage() {
         </form>
         <div className={styles.registerPrompt}>
           <span>Não tem uma conta? </span>
-          <Link href="/register">
+          <Link href="/register" className={styles.link}>
             Cadastre-se
+          </Link>
+        </div>
+        <div className={styles.forgotPasswordLink}>
+          <span>Esqueceu sua senha? </span>
+          <Link href="/forgot-password" className={styles.link}>
+            Clique aqui
           </Link>
         </div>
       </div>

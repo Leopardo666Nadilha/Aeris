@@ -2,7 +2,7 @@
   display: flex;
   justify-content: center;
   background-color: var(--color-background);
-  padding: 5rem 1rem 0;
+  padding-top: 2rem;
 }
 
 .formContainer {
@@ -112,3 +112,19 @@
   text-decoration: underline;
 }
 
+.forgotPasswordLink {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.forgotPasswordLink a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forgotPasswordLink a:hover {
+  text-decoration: underline;
+}
