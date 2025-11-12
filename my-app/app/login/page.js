@@ -35,7 +35,10 @@ export default function LoginPage() {
       localStorage.setItem('userEmail', data.user.email);
 
       // Redireciona para o dashboard ou página principal após o login
-      router.push('/'); // Ou '/dashboard'
+      // Usamos router.refresh() em vez de router.push() para forçar
+      // um recarregamento dos Server Components e do estado do DataContext.
+      // Isso garante que o usuário veja a página correta de "logado".
+      router.refresh();
 
     } catch (err) {
       setError(err.message);
