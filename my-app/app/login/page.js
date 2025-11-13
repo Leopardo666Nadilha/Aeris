@@ -30,7 +30,7 @@ export default function LoginPage() {
         throw new Error(data.message || 'Falha ao fazer login.');
       }
 
-      // Salva o e-mail no localStorage para exibição (opcional, mas útil)
+      // Salva o e-mail no localStorage para exibição
       // A segurança real vem do cookie de sessão, não disso.
       localStorage.setItem('userEmail', data.user.email);
 

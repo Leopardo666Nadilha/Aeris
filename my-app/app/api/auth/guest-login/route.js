@@ -12,9 +12,7 @@ export async function POST() {
     const { data, error } = await supabase.auth.signInAnonymously({
       options: {
         data: {
-          // Podemos continuar usando o `user_metadata` para dados adicionais,
-          // como um nome de exibição padrão para o convidado.
-          full_name: 'Convidado', // O campo `is_guest` não é mais necessário aqui.
+          full_name: 'Convidado',
         },
       },
     });
