@@ -47,6 +47,28 @@ export default function LoginPage() {
     }
   };
 
+  const handleGuestLogin = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/guest-login', {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Falha ao entrar como convidado.');
+      }
+
+      window.location.href = '/';
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <section className={styles.container}>
       <div className={styles.formContainer}>
@@ -79,6 +101,11 @@ export default function LoginPage() {
           <Link href="/forgot-password" className={styles.link}>
             Clique aqui
           </Link>
+        </div>
+        <div className={styles.forgotPasswordLink}>
+          <button onClick={handleGuestLogin} className={styles.linkButton} disabled={isLoading}>
+            {isLoading ? 'Gerando acesso...' : 'Acessar como Convidado'}
+          </button>
         </div>
       </div>
     </section>
