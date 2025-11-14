@@ -10,12 +10,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState({ email: false, guest: false });
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    setLoading({ email: true, guest: false });
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -43,13 +43,13 @@ export default function LoginPage() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setIsLoading(false);
+      setLoading({ email: false, guest: false });
     }
   };
 
   const handleGuestLogin = async () => {
     setError('');
-    setIsLoading(true);
+    setLoading({ email: false, guest: true });
 
     try {
       const res = await fetch('/api/auth/guest-login', {
@@ -65,7 +65,7 @@ export default function LoginPage() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setIsLoading(false);
+      setLoading({ email: false, guest: false });
     }
   };
 
@@ -86,8 +86,8 @@ export default function LoginPage() {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <button type="submit" className={styles.submitButton} disabled={isLoading}>
-            {isLoading ? 'Entrando...' : 'Entrar'}
+          <button type="submit" className={styles.submitButton} disabled={loading.email || loading.guest}>
+            {loading.email ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
         <div className={styles.registerPrompt}>
@@ -103,8 +103,8 @@ export default function LoginPage() {
           </Link>
         </div>
         <div className={styles.forgotPasswordLink}>
-          <button onClick={handleGuestLogin} className={styles.linkButton} disabled={isLoading}>
-            {isLoading ? 'Gerando acesso...' : 'Acessar como Convidado'}
+          <button onClick={handleGuestLogin} className={styles.linkButton} disabled={loading.email || loading.guest}>
+            {loading.guest ? 'Gerando acesso...' : 'Acessar como Convidado'}
           </button>
         </div>
       </div>
