@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from '../login/Login.module.css';
@@ -8,26 +8,14 @@ import styles from '../login/Login.module.css';
 export default function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [token, setToken] = useState('');
+  // O token vem direto da URL; não precisa ser copiado para um estado.
+  const token = searchParams.get('token') ?? '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [submitError, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const tokenFromUrl = searchParams.get('token');
-    if (tokenFromUrl) {
-      setToken(tokenFromUrl);
-    } else {
-      // Atraso para definir o erro para evitar flash de mensagem incorreta durante a renderização inicial
-      setTimeout(() => {
-        if (!searchParams.get('token')) {
-            setError('Token de redefinição não encontrado ou inválido.');
-        }
-      }, 100);
-    }
-  }, [searchParams]);
+  const error = submitError || (token ? '' : 'Token de redefinição não encontrado ou inválido.');
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -1,0 +1,10 @@
+{
+  "name": "minimatch-v3-compat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Expõe a API CommonJS do minimatch 3 (module.exports = função) sobre o minimatch 11, que corrige GHSA-g3hv-75wg-m249.",
+  "main": "index.js",
+  "dependencies": {
+    "minimatch-v11": "npm:minimatch@^11.0.1"
+  }
+}

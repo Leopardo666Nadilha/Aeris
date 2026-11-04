@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './Login.module.css'; // Usaremos um CSS novo para o login
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -38,6 +36,7 @@ export default function LoginPage() {
       // Isso garante que todos os contextos (como o DataContext) sejam
       // reinicializados do zero com a nova sessão do usuário,
       // resolvendo o problema de dados zerados e a longa espera.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- recarga completa intencional para reinicializar os contextos com a nova sessão
       window.location.href = '/';
 
     } catch (err) {
@@ -61,6 +60,7 @@ export default function LoginPage() {
         throw new Error(data.message || 'Falha ao entrar como convidado.');
       }
 
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- recarga completa intencional para reinicializar os contextos com a nova sessão
       window.location.href = '/';
     } catch (err) {
       setError(err.message);

@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext, useSyncExternalStore } from 'react';
+
+const STORAGE_KEY = 'user_currency_preference';
+
+// Mantém a moeda sincronizada entre abas quando o localStorage muda em outra janela
+const subscribeToStorage = (callback) => {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+};
 
 // Definição das moedas suportadas com seus locais e símbolos
 const supportedCurrencies = {
@@ -23,23 +31,21 @@ const CurrencyContext = createContext(defaultContextValue);
 export const useCurrency = () => useContext(CurrencyContext);
 
 export const CurrencyProvider = ({ children }) => {
-  // Inicializa SEMPRE com o valor padrão do servidor.
-  const [currency, setCurrency] = useState('BRL');
+  // No servidor (e na hidratação) usa sempre 'BRL'; no cliente, lê a preferência salva.
+  const storedCurrency = useSyncExternalStore(
+    subscribeToStorage,
+    () => localStorage.getItem(STORAGE_KEY),
+    () => null
+  );
+  const [selectedCurrency, setSelectedCurrency] = useState(null);
+  const currency =
+    selectedCurrency ?? (supportedCurrencies[storedCurrency] ? storedCurrency : 'BRL');
 
-  // Após a montagem no cliente, busca a preferência do localStorage.
-  useEffect(() => {
-    const storedCurrency = localStorage.getItem('user_currency_preference');
-    if (storedCurrency && supportedCurrencies[storedCurrency]) {
-      setCurrency(storedCurrency);
-    }
-  }, []);
-
-  // Salva a preferência no localStorage sempre que a moeda mudar.
-  useEffect(() => {
-    if (typeof window !== 'undefined') { // Verifica se está no ambiente do navegador
-      localStorage.setItem('user_currency_preference', currency);
-    }
-  }, [currency]);
+  // Salva a preferência no localStorage sempre que o usuário escolhe uma moeda.
+  const setCurrency = (newCurrency) => {
+    setSelectedCurrency(newCurrency);
+    localStorage.setItem(STORAGE_KEY, newCurrency);
+  };
 
   /**
    * Formata um valor numérico para a moeda selecionada.

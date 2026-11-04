@@ -1,25 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import styles from './ExpandableSection.module.css';
 import {
   MdOutlineKeyboardDoubleArrowDown,
   MdOutlineKeyboardDoubleArrowUp,
 } from 'react-icons/md';
 
+// Breakpoint de desktop: a seção começa expandida em telas a partir de 1200px
+const DESKTOP_QUERY = '(min-width: 1200px)';
+
+const subscribeToDesktop = (callback) => {
+  const mql = window.matchMedia(DESKTOP_QUERY);
+  mql.addEventListener('change', callback);
+  return () => mql.removeEventListener('change', callback);
+};
+
 export default function ExpandableSection({ title, children }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const isDesktop = useSyncExternalStore(
+    subscribeToDesktop,
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => false // No servidor, sempre começa recolhido
+  );
+  // null = o usuário ainda não clicou; segue o padrão do tamanho da tela
+  const [userExpanded, setUserExpanded] = useState(null);
+  const isExpanded = userExpanded ?? isDesktop;
+
   const handleToggle = () => {
-    setIsExpanded(!isExpanded);
+    setUserExpanded(!isExpanded);
   };
-  
-  useEffect(() => {
-    // Verifica se a tela é maior que o breakpoint de desktop
-    if (window.innerWidth >= 1200) {
-      // Define o estado como expandido
-      setIsExpanded(true);
-    }
-  }, []);
 
   return (
     <div className={styles.expandableSection}>

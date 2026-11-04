@@ -10,10 +10,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
-    // Arquivos gerados pelo next-pwa no build
-    'public/sw.js',
-    'public/workbox-*.js',
-    'public/fallback-*.js',
+    // Shim CommonJS de compatibilidade do minimatch (ver vendor/minimatch-v3-compat)
+    'vendor/**',
   ]),
 ]);
 

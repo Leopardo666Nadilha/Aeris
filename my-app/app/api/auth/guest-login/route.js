@@ -1,6 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
 
 export async function POST() {
   const supabase = await createSupabaseServerClient();

@@ -174,7 +174,7 @@ export default function TransacoesPage() {
           ) : (
             <div className={styles.noTransactions}>
               <p>Nenhuma transação registrada ainda.</p>
-              <p>Use o botão '+' para adicionar seu primeiro gasto ou recebimento!</p>
+              <p>Use o botão &lsquo;+&rsquo; para adicionar seu primeiro gasto ou recebimento!</p>
             </div>
           )}
         </div>
@@ -219,7 +219,7 @@ export default function TransacoesPage() {
         <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Confirmar Exclusão">
           <div className={styles.modalContent}>
             <p>
-              Você tem certeza que deseja excluir a {selectedItem.type === 'income' ? 'renda' : 'transação'}: <strong>"{selectedItem.description}"</strong>?
+              Você tem certeza que deseja excluir a {selectedItem.type === 'income' ? 'renda' : 'transação'}: <strong>&ldquo;{selectedItem.description}&rdquo;</strong>?
             </p>
             <p className={styles.warningText}>
               Esta ação não pode ser desfeita.

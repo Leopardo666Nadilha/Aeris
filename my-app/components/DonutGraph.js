@@ -14,6 +14,8 @@ export default function DonutGraph({ data }) {
 
   // Calcula o total de gastos uma única vez ou quando os dados mudam
   const totalGastos = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
+  // Sem gastos não há fatia para destacar
+  const activeSlice = totalGastos === 0 ? null : selectedSlice;
 
 
   // Efeito para desenhar o gráfico
@@ -59,27 +61,19 @@ export default function DonutGraph({ data }) {
       .data(data_ready)
       .enter()
       .append('path')
-      .attr('d', (d) => (selectedSlice && selectedSlice.category_name === d.data.category_name ? arcSelected(d) : arc(d)))
+      .attr('d', (d) => (activeSlice && activeSlice.category_name === d.data.category_name ? arcSelected(d) : arc(d)))
       .attr('fill', (d) => color(d.data.category_name))
       .attr('class', styles.donutSlice)
       .on('click', (event, d) => {
         // Alterna a seleção da fatia
-        if (selectedSlice && selectedSlice.category_name === d.data.category_name) {
+        if (activeSlice && activeSlice.category_name === d.data.category_name) {
           setSelectedSlice(null);
         } else {
           setSelectedSlice(d.data);
         }
       });
 
-  }, [data, selectedSlice]);
-
-  // Efeito para lidar com o estado de "sem dados" e resetar a seleção
-  useEffect(() => {
-    // Se não houver dados ou o total for 0, reseta a fatia selecionada
-    if (!data || data.length === 0 || totalGastos === 0) {
-      setSelectedSlice(null);
-    }
-  }, [data, totalGastos]);
+  }, [data, totalGastos, activeSlice]);
 
   return (
     <div className={styles.graphContainer}>
@@ -90,10 +84,10 @@ export default function DonutGraph({ data }) {
           // Se o total de gastos é 0, mostra a mensagem padrão
           <p className={styles.infoText}>Total de gastos: {formatCurrency(0)}</p>
         ) : (
-          selectedSlice ? (
+          activeSlice ? (
             // Se uma fatia está selecionada e há gastos
             <p className={styles.infoText}>
-              Gastos com <strong>{selectedSlice.category_name}</strong>: {formatCurrency(selectedSlice.value)}
+              Gastos com <strong>{activeSlice.category_name}</strong>: {formatCurrency(activeSlice.value)}
             </p>
           ) : (
             // Caso contrário (há gastos, mas nenhuma fatia selecionada), mostra o total

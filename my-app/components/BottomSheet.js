@@ -5,12 +5,16 @@ import formStyles from './Form.module.css'; // Importando estilos de formulário
 import { MdClose } from 'react-icons/md';
 
 export default function BottomSheet({ isOpen, onClose, categories, onSaveTransaction, onSaveIncome }) {
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(isOpen);
   const [activeTab, setActiveTab] = useState('expense'); // 'expense' ou 'income'
+
+  // Monta o sheet assim que ele é aberto (ajuste de estado durante o render, sem efeito em cascata)
+  if (isOpen && !isMounted) {
+    setIsMounted(true);
+  }
 
   useEffect(() => {
     if (isOpen) {
-      setIsMounted(true);
       document.body.style.overflow = 'hidden'; // Impede o scroll do body quando o sheet está aberto
     } else {
       document.body.style.overflow = '';

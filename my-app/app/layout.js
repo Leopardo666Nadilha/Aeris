@@ -4,7 +4,8 @@ import AppLayout from '../components/AppLayout';
 import './globals.css';
 import { ThemeProvider } from '../lib/ThemeContext';
 import { DataProvider } from '../lib/DataContext';
-import ThemeScript from '../lib/ThemeScript';
+import Script from 'next/script';
+import ServiceWorkerRegister from '../components/ServiceWorkerRegister';
 import { AppProviders } from '@/contexts/AppProviders';
 
 // Configuração da fonte principal (Inter)
@@ -35,10 +36,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body>
-        <ThemeScript />
+        {/* Aplica o tema salvo antes do React carregar, evitando o "flicker" do tema */}
+        <Script id='theme-switcher' strategy='beforeInteractive'>
+          {`document.documentElement.classList.add(window.localStorage.getItem('theme') || 'dark');`}
+        </Script>
+        <ServiceWorkerRegister />
         <ThemeProvider>
           <DataProvider> {/* Envolva com o DataProvider */}
-            <div className={inter.className}>
+            <div className={`${inter.className} ${inter.variable} ${merriweather.variable}`}>
             <AppProviders> {/* 2. Use o AppProviders para envolver tudo */}
               <Header />
               <AppLayout>

@@ -5,12 +5,12 @@ import { createContext, useState, useContext, useEffect, useCallback } from 'rea
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  // Inicializa o estado do tema lendo do DOM (que já foi setado pelo ThemeScript)
+  // Inicializa o estado do tema lendo do DOM (que já foi setado pelo script de tema no layout)
   // ou um valor padrão para SSR.
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const root = document.documentElement;
-      // Lê a classe aplicada pelo ThemeScript ou assume 'dark' como padrão
+      // Lê a classe aplicada pelo script de tema ou assume 'dark' como padrão
       return root.classList.contains('dark') ? 'dark' : 'light';
     }
     return 'dark'; // Tema padrão para SSR ou quando window não está disponível
