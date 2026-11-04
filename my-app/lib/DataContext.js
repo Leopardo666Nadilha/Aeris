@@ -1,12 +1,12 @@
 'use client';
 
 import { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 const DataContext = createContext();
 
 export function DataProvider({ children }) {
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseBrowserClient();
   const [transactions, setTransactions] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [categories, setCategories] = useState([]);

@@ -9,7 +9,7 @@ import { useData } from '../../lib/DataContext';
 import { useRouter } from 'next/navigation';
 import { useCurrency } from '@/contexts/CurrencyContext'; // Importa o hook de moeda
 import Modal from '../../components/Modal'; // Componente Modal
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 export default function PerfilPage() {
   const { transactions, incomes, balance } = useData();
@@ -29,7 +29,7 @@ export default function PerfilPage() {
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseBrowserClient();
 
   // Calcula os totais usando useMemo para eficiência
   const totalGasto = useMemo(() => transactions.reduce((sum, transaction) => sum + transaction.value, 0), [transactions]);

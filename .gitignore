@@ -26,3 +26,7 @@ yarn-debug.log*
 yarn-error.log*
 
 my-app/.vscode/
+# arquivos gerados pelo next-pwa no build
+my-app/public/sw.js
+my-app/public/workbox-*.js
+my-app/public/fallback-*.js

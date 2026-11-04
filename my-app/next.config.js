@@ -10,8 +10,7 @@ const withPWA = require('next-pwa')({
   buildExcludes: [/middleware-manifest\.json$/],
 });
 
-const nextConfig = {
-  swcMinify: true, // Habilita o minificador SWC do Next.js, que é mais rápido
-};
+// swcMinify foi removido: o SWC já é o minificador padrão desde o Next 15.
+const nextConfig = {};
 
 module.exports = withPWA(nextConfig);

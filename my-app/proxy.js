@@ -1,18 +1,27 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-export async function middleware(req) {
+export async function proxy(req) {
   // Cria uma resposta inicial. Isso é necessário para que o Supabase possa ler/escrever cookies.
-  const res = NextResponse.next();
+  let res = NextResponse.next({ request: req });
   
-  // Cria um cliente Supabase que pode operar no Middleware.
-  const supabase = createMiddlewareClient({ req, res });
+  // Cria um cliente Supabase que pode operar no Proxy, propagando cookies renovados na resposta.
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll: () => req.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          res = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+        },
+      },
+    }
+  );
 
-  // Atualiza a sessão do usuário. Isso é importante para garantir que a sessão
-  // esteja sempre fresca, especialmente em um PWA.
-  await supabase.auth.getSession();
-
-  // Obtém os dados do usuário logado.
+  // Obtém os dados do usuário logado (também renova a sessão, se necessário).
   const { data: { user } } = await supabase.auth.getUser();
 
   // --- LÓGICA DE REDIRECIONAMENTO ---
@@ -34,7 +43,7 @@ export async function middleware(req) {
   return res;
 }
 
-// Configuração do Middleware: especifica em quais rotas ele deve ser executado.
+// Configuração do Proxy: especifica em quais rotas ele deve ser executado.
 export const config = {
   matcher: ['/', '/login', '/register', '/dashboard', '/dashboard/budget', '/perfil', '/transacoes'],
 };

@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(request) {
   try {
     const { oldPassword, newPassword } = await request.json();
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createSupabaseServerClient();
 
     // 1. Obter o usuário da sessão segura
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
