@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
@@ -8,13 +8,12 @@ export async function POST(request) {
     const supabase = await createSupabaseServerClient();
 
     // 1. Obter o usuário da sessão segura
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // getUser() valida o token no servidor do Supabase; getSession() apenas lê o cookie.
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
+    if (userError || !user) {
       return NextResponse.json({ message: 'Não autorizado. Faça login novamente.' }, { status: 401 });
     }
-
-    const user = session.user;
 
     // 2. Verificar a senha do usuário para confirmar a identidade
     const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -27,11 +26,7 @@ export async function POST(request) {
     }
 
     // 3. Criar um cliente admin com a chave de serviço para poder excluir o usuário
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SECRET_KEY,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const supabaseAdmin = createSupabaseAdminClient();
 
     // 4. Excluir o usuário usando o ID
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
@@ -39,6 +34,9 @@ export async function POST(request) {
     if (deleteError) {
       throw deleteError;
     }
+
+    // Encerra a sessão local (limpa os cookies) do usuário excluído
+    await supabase.auth.signOut();
 
     return NextResponse.json({ message: 'Conta excluída com sucesso.' }, { status: 200 });
   } catch (error) {

@@ -1,12 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient, findUser } from '@/lib/supabase-admin';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 export async function POST(request) {
-  const { token, password } = await request.json();
+  const { token, password } = await request.json().catch(() => ({}));
 
   if (!token || !password) {
     return NextResponse.json({ message: 'Token e nova senha são obrigatórios.' }, { status: 400 });
+  }
+
+  if (String(password).length < 6) {
+    return NextResponse.json({ message: 'A senha deve ter pelo menos 6 caracteres.' }, { status: 400 });
   }
 
   try {
@@ -16,23 +20,16 @@ export async function POST(request) {
       .update(token)
       .digest('hex');
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SECRET_KEY
-    );
+    const supabaseAdmin = createSupabaseAdminClient();
 
     // 2. Encontrar o usuário com base no token hash
     // A busca em JSONB (user_metadata) é mais complexa.
     // Esta é uma limitação do Supabase Auth, o ideal seria uma tabela `password_resets`.
     // A abordagem abaixo é um workaround e pode ser lenta em grande escala.
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-
-    if (listError) {
-      throw listError;
-    }
-
     // Encontra o usuário que possui o token correspondente E cujo token não expirou
-    const user = users.find(u =>
+    const user = await findUser(
+      supabaseAdmin,
+      (u) =>
         u.user_metadata?.password_reset_token === hashedToken &&
         new Date(u.user_metadata?.password_reset_expires) > new Date()
     );
@@ -41,10 +38,9 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Token inválido ou expirado.' }, { status: 400 });
     }
 
-    // Prepara os novos metadados, preservando os existentes
-    const newMetadata = { ...user.user_metadata };
-    delete newMetadata.password_reset_token;
-    delete newMetadata.password_reset_expires;
+    // Invalida o token. O Auth mescla user_metadata, então apagar a chave não basta:
+    // é preciso sobrescrevê-la com null para que o link não possa ser reutilizado.
+    const newMetadata = { ...user.user_metadata, password_reset_token: null, password_reset_expires: null };
 
     // 3. Atualizar a senha do usuário
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(

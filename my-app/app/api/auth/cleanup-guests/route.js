@@ -1,62 +1,44 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createSupabaseAdminClient, iterateUsers } from '@/lib/supabase-admin';
 
-// Rota para lidar com requisições POST para limpeza de convidados
-export async function POST(request) {
-  // 1. Verificação de Segurança
-  // Pega o token de autorização dos headers da requisição.
-  const authHeader = request.headers.get('authorization');
-  
-  // Compara o token recebido com o token secreto definido nas suas variáveis de ambiente.
-  // Isso garante que apenas serviços autorizados (como o Vercel Cron Job) possam executar esta função.
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+// Usuários convidados com mais de 24h são removidos
+const MAX_GUEST_AGE_MS = 24 * 60 * 60 * 1000;
+
+async function cleanupGuests(request) {
+  // Apenas o Vercel Cron (ou quem tiver o CRON_SECRET) pode executar
+  const secret = process.env.CRON_SECRET;
+  if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
     return new Response('Acesso não autorizado', { status: 401 });
   }
 
-  // 2. Lógica de Exclusão
   try {
-    // Cria um cliente Supabase com a Service Role Key para ter permissões de administrador.
-    // É crucial que essa chave NÃO seja exposta no lado do cliente.
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
+    const admin = createSupabaseAdminClient();
+    const cutoff = Date.now() - MAX_GUEST_AGE_MS;
 
-    console.log("Iniciando a limpeza de usuários convidados...");
-
-    // Busca todos os usuários anônimos (convidados)
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-
-    if (listError) {
-      throw new Error(`Erro ao listar usuários: ${listError.message}`);
+    // Coleta antes de apagar para não alterar a paginação durante a iteração
+    const guests = [];
+    for await (const user of iterateUsers(admin)) {
+      if (user.is_anonymous && new Date(user.created_at).getTime() < cutoff) guests.push(user);
     }
 
-    // Filtra para garantir que estamos pegando apenas os anônimos
-    const guestUsers = users.filter(user => user.is_anonymous);
-
-    if (guestUsers.length === 0) {
-      console.log("Nenhum usuário convidado para apagar.");
+    if (guests.length === 0) {
       return NextResponse.json({ message: 'Nenhum usuário convidado encontrado.' });
     }
 
-    console.log(`Encontrados ${guestUsers.length} usuários convidados para apagar.`);
+    const results = await Promise.allSettled(guests.map((user) => admin.auth.admin.deleteUser(user.id)));
+    const failed = results.filter((r) => r.status === 'rejected' || r.value?.error).length;
 
-    // Mapeia as promessas de exclusão
-    const deletePromises = guestUsers.map(user =>
-      supabaseAdmin.auth.admin.deleteUser(user.id)
-    );
-
-    // Executa todas as exclusões em paralelo
-    await Promise.all(deletePromises);
-
-    console.log(`Sucesso! ${guestUsers.length} usuários convidados foram apagados.`);
-
+    console.log(`Limpeza de convidados: ${guests.length - failed} apagados, ${failed} falhas.`);
     return NextResponse.json({
-      message: `${guestUsers.length} usuários convidados apagados com sucesso.`,
+      message: `${guests.length - failed} usuários convidados apagados.`,
+      failed,
     });
-
   } catch (error) {
-    console.error('Erro ao apagar usuários convidados:', error.message);
+    console.error('Erro ao apagar usuários convidados:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// O Vercel Cron dispara requisições GET; POST é mantido para execuções manuais.
+export const GET = cleanupGuests;
+export const POST = cleanupGuests;

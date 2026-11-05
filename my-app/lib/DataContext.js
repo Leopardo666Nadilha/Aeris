@@ -1,117 +1,111 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { sumValues } from './finance';
 
-const DataContext = createContext();
+const DataContext = createContext(null);
 
+/**
+ * Estado global dos dados financeiros do usuário.
+ * Todas as funções de escrita retornam `{ error }` (null em caso de sucesso)
+ * para que a interface possa exibir a falha ao usuário.
+ */
 export function DataProvider({ children }) {
-  const supabase = createSupabaseBrowserClient();
+  // Um único cliente por montagem do provider
+  const [supabase] = useState(createSupabaseBrowserClient);
+  const [user, setUser] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [budgets, setBudgets] = useState([]); // Estado para orçamentos
-  const [loading, setLoading] = useState(true); // Estado de carregamento
+  const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Efeito para carregar os dados do usuário quando o componente é montado
   useEffect(() => {
-    const loadInitialData = async (user) => {
-      const [
-        { data: categoriesData },
-        { data: transactionsData },
-        { data: incomesData },
-        { data: budgetsData } // Adiciona o carregamento de budgets
-      ] = await Promise.all([
-        supabase.from('categories').select('*').eq('user_id', user.id),
-        supabase.from('transactions').select('*').eq('user_id', user.id),
-        supabase.from('incomes').select('*').eq('user_id', user.id),
-        supabase.from('budgets').select('*').eq('user_id', user.id) // Busca os orçamentos
-      ]);
+    let cancelled = false;
 
-      setCategories(categoriesData || []);
-      setTransactions(transactionsData || []);
-      setIncomes(incomesData || []);
-      setBudgets(budgetsData || []); // Define os orçamentos
+    const loadInitialData = async (currentUser) => {
+      const [categoriesRes, transactionsRes, incomesRes, budgetsRes] = await Promise.all([
+        supabase.from('categories').select('*').eq('user_id', currentUser.id),
+        supabase.from('transactions').select('*').eq('user_id', currentUser.id),
+        supabase.from('incomes').select('*').eq('user_id', currentUser.id),
+        supabase.from('budgets').select('*').eq('user_id', currentUser.id),
+      ]);
+      if (cancelled) return;
+
+      [categoriesRes, transactionsRes, incomesRes, budgetsRes].forEach(({ error }) => {
+        if (error) console.error('Erro ao carregar dados:', error);
+      });
+
+      setCategories(categoriesRes.data || []);
+      setTransactions(transactionsRes.data || []);
+      setIncomes(incomesRes.data || []);
+      setBudgets(budgetsRes.data || []);
       setLoading(false);
     };
 
-    // Escuta mudanças no estado de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        // Se há uma sessão (após login ou no carregamento inicial da página),
-        setLoading(true); // Define o carregamento para 'true' antes de buscar novos dados
-        // carregamos os dados. A função `loadInitialData` já define `setLoading(false)` no final.
-        loadInitialData(session.user);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      const sessionUser = session?.user ?? null;
+      setUser(sessionUser);
+
+      // Renovações de token não precisam recarregar tudo
+      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
+
+      if (sessionUser) {
+        setLoading(true);
+        // Adiado para fora do callback: o Supabase recomenda não aguardar chamadas dentro dele
+        setTimeout(() => loadInitialData(sessionUser), 0);
       } else {
-        // Se não há sessão (logout ou estado inicial sem usuário),
-        // limpamos os dados e paramos o carregamento.
         setTransactions([]);
         setIncomes([]);
-        setBudgets([]); // Limpa os orçamentos
+        setBudgets([]);
         setCategories([]);
         setLoading(false);
       }
     });
 
-    // Limpa a inscrição quando o componente é desmontado
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
-  // Calcula o saldo dinamicamente
-  const balance = useMemo(() => {
-    const totalIncomes = incomes.reduce((sum, income) => sum + income.value, 0);
-    const totalExpenses = transactions.reduce((sum, transaction) => sum + transaction.value, 0);
-    return totalIncomes - totalExpenses;
-  }, [incomes, transactions]);
+  const balance = useMemo(() => sumValues(incomes) - sumValues(transactions), [incomes, transactions]);
 
-  // --- Funções que interagem com o Supabase ---
+  const requireUser = useCallback(async () => {
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+    return currentUser;
+  }, [supabase]);
+
+  const fail = (message, error) => {
+    console.error(message, error);
+    return { error: error ?? new Error(message) };
+  };
+
+  // --- Transações (gastos) ---
 
   const addTransaction = async (transaction) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const currentUser = await requireUser();
+    if (!currentUser) return fail('Sessão expirada.');
 
     const { data, error } = await supabase
       .from('transactions')
       .insert({
         description: transaction.description,
         value: transaction.value,
-        category_name: transaction.label, // Mapeia 'label' para a coluna 'category_name'
-        user_id: user.id,
+        category_name: transaction.label,
+        user_id: currentUser.id,
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Erro ao adicionar transação:', error);
-    } else {
-      setTransactions((prev) => [...prev, data]);
-    }
-  };
-
-  const addIncome = async (income) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('incomes')
-      .insert({ ...income, user_id: user.id })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro ao adicionar renda:', error);
-    } else {
-      setIncomes((prev) => [...prev, data]);
-    }
-  };
-
-  const removeTransaction = async (transactionId) => {
-    const { error } = await supabase.from('transactions').delete().eq('id', transactionId);
-    if (error) {
-      console.error('Erro ao remover transação:', error);
-    } else {
-      setTransactions(prev => prev.filter(t => t.id !== transactionId));
-    }
+    if (error) return fail('Erro ao adicionar transação:', error);
+    setTransactions((prev) => [...prev, data]);
+    return { error: null };
   };
 
   const updateTransaction = async (transactionId, updatedData) => {
@@ -121,115 +115,114 @@ export function DataProvider({ children }) {
       .eq('id', transactionId)
       .select()
       .single();
-    if (error) {
-      console.error('Erro ao atualizar transação:', error);
-    } else {
-      setTransactions(prev => prev.map(t => (t.id === transactionId ? data : t)));
-    }
+    if (error) return fail('Erro ao atualizar transação:', error);
+    setTransactions((prev) => prev.map((t) => (t.id === transactionId ? data : t)));
+    return { error: null };
   };
 
-  const removeIncome = async (incomeId) => {
-    const { error } = await supabase.from('incomes').delete().eq('id', incomeId);
-    if (error) {
-      console.error('Erro ao remover renda:', error);
-    } else {
-      setIncomes(prev => prev.filter(i => i.id !== incomeId));
-    }
+  const removeTransaction = async (transactionId) => {
+    const { error } = await supabase.from('transactions').delete().eq('id', transactionId);
+    if (error) return fail('Erro ao remover transação:', error);
+    setTransactions((prev) => prev.filter((t) => t.id !== transactionId));
+    return { error: null };
+  };
+
+  // --- Rendas ---
+
+  const addIncome = async (income) => {
+    const currentUser = await requireUser();
+    if (!currentUser) return fail('Sessão expirada.');
+
+    const { data, error } = await supabase
+      .from('incomes')
+      .insert({ ...income, user_id: currentUser.id })
+      .select()
+      .single();
+
+    if (error) return fail('Erro ao adicionar renda:', error);
+    setIncomes((prev) => [...prev, data]);
+    return { error: null };
   };
 
   const updateIncome = async (incomeId, updatedData) => {
     const { data, error } = await supabase.from('incomes').update(updatedData).eq('id', incomeId).select().single();
-    if (error) {
-      console.error('Erro ao atualizar renda:', error);
-    } else {
-      setIncomes(prev => prev.map(i => (i.id === incomeId ? data : i)));
-    }
+    if (error) return fail('Erro ao atualizar renda:', error);
+    setIncomes((prev) => prev.map((i) => (i.id === incomeId ? data : i)));
+    return { error: null };
   };
 
-  const addCategory = async (category) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const removeIncome = async (incomeId) => {
+    const { error } = await supabase.from('incomes').delete().eq('id', incomeId);
+    if (error) return fail('Erro ao remover renda:', error);
+    setIncomes((prev) => prev.filter((i) => i.id !== incomeId));
+    return { error: null };
+  };
 
+  // --- Categorias (tabela legada; os orçamentos são a fonte de categorias da interface) ---
+
+  const addCategory = async (category) => {
+    const currentUser = await requireUser();
+    if (!currentUser) return fail('Sessão expirada.');
     const { data, error } = await supabase
       .from('categories')
-      .insert({ ...category, user_id: user.id })
+      .insert({ ...category, user_id: currentUser.id })
       .select()
       .single();
-
-    if (error) {
-      console.error('Erro ao adicionar categoria:', error);
-    } else {
-      setCategories((prev) => [...prev, data]);
-    }
+    if (error) return fail('Erro ao adicionar categoria:', error);
+    setCategories((prev) => [...prev, data]);
+    return { error: null };
   };
 
   const removeCategory = async (categoryName) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const categoryToDelete = categories.find(c => c.name === categoryName);
-    if (!categoryToDelete) return;
-
+    const categoryToDelete = categories.find((c) => c.name === categoryName);
+    if (!categoryToDelete) return { error: null };
     const { error } = await supabase.from('categories').delete().eq('id', categoryToDelete.id);
-
-    if (error) {
-      console.error('Erro ao remover categoria:', error);
-    } else {
-      setCategories((prev) => prev.filter(cat => cat.name !== categoryName));
-    }
+    if (error) return fail('Erro ao remover categoria:', error);
+    setCategories((prev) => prev.filter((cat) => cat.id !== categoryToDelete.id));
+    return { error: null };
   };
 
   const updateCategory = async (originalName, updatedCategoryData) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const categoryToUpdate = categories.find(c => c.name === originalName);
-    if (!categoryToUpdate) return;
-
+    const categoryToUpdate = categories.find((c) => c.name === originalName);
+    if (!categoryToUpdate) return { error: null };
     const { data, error } = await supabase
       .from('categories')
       .update({ name: updatedCategoryData.name, goal: updatedCategoryData.goal })
       .eq('id', categoryToUpdate.id)
       .select()
       .single();
-
-    if (error) {
-      console.error('Erro ao atualizar categoria:', error);
-    } else {
-      setCategories((prev) => prev.map((cat) => (cat.id === data.id ? data : cat)));
-    }
+    if (error) return fail('Erro ao atualizar categoria:', error);
+    setCategories((prev) => prev.map((cat) => (cat.id === data.id ? data : cat)));
+    return { error: null };
   };
 
-  // --- Funções CRUD para a tabela 'budgets' ---
+  // --- Orçamentos (cada orçamento define uma categoria de gasto) ---
 
   const addBudget = async (budgetData) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const currentUser = await requireUser();
+    if (!currentUser) return fail('Sessão expirada.');
 
     const { data, error } = await supabase
       .from('budgets')
-      .insert({ ...budgetData, user_id: user.id })
+      .insert({ ...budgetData, user_id: currentUser.id })
       .select()
       .single();
 
-    if (error) {
-      console.error('Erro ao adicionar orçamento:', error);
-    } else {
-      setBudgets((prev) => [...prev, data]);
-    }
+    if (error) return fail('Erro ao adicionar orçamento:', error);
+    setBudgets((prev) => [...prev, data]);
+    return { error: null };
   };
 
   const removeBudget = async (budgetId) => {
     const { error } = await supabase.from('budgets').delete().eq('id', budgetId);
-
-    if (error) {
-      console.error('Erro ao remover orçamento:', error);
-    } else {
-      setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
-    }
+    if (error) return fail('Erro ao remover orçamento:', error);
+    setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
+    return { error: null };
   };
 
   const updateBudget = async (budgetId, updatedData) => {
+    const previous = budgets.find((b) => b.id === budgetId);
+
     const { data, error } = await supabase
       .from('budgets')
       .update(updatedData)
@@ -237,32 +230,48 @@ export function DataProvider({ children }) {
       .select()
       .single();
 
-    if (error) {
-      console.error('Erro ao atualizar orçamento:', error);
-    } else {
-      // Atualiza o estado local com os novos dados do orçamento
-      setBudgets((prev) =>
-        prev.map((budget) => (budget.id === budgetId ? data : budget))
-      );
+    if (error) return fail('Erro ao atualizar orçamento:', error);
+    setBudgets((prev) => prev.map((budget) => (budget.id === budgetId ? data : budget)));
+
+    // Ao renomear a categoria, os gastos ligados a ela acompanham o novo nome.
+    // Sem isso, o progresso do orçamento renomeado voltava para zero.
+    const oldName = previous?.category_name;
+    const newName = data.category_name;
+    if (oldName && newName && oldName !== newName) {
+      const currentUser = await requireUser();
+      if (currentUser) {
+        const { error: renameError } = await supabase
+          .from('transactions')
+          .update({ category_name: newName })
+          .eq('user_id', currentUser.id)
+          .eq('category_name', oldName);
+        if (renameError) return fail('Erro ao renomear a categoria dos gastos:', renameError);
+        setTransactions((prev) =>
+          prev.map((t) => (t.category_name === oldName ? { ...t, category_name: newName } : t))
+        );
+      }
     }
+    return { error: null };
   };
 
   const value = {
+    user,
+    isGuest: Boolean(user?.is_anonymous),
     transactions,
     incomes,
-    balance, // Exponha o saldo calculado
-    loading, // Garante que o estado de carregamento seja exposto
+    balance,
+    loading,
     categories,
     addCategory,
-    addTransaction,
     removeCategory,
     updateCategory,
-    addIncome,
+    addTransaction,
     updateTransaction,
     removeTransaction,
+    addIncome,
     updateIncome,
     removeIncome,
-    budgets, // Expõe os orçamentos
+    budgets,
     addBudget,
     updateBudget,
     removeBudget,
@@ -271,8 +280,8 @@ export function DataProvider({ children }) {
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
 
-// Hook customizado para facilitar o uso do contexto
 export function useData() {
-  return useContext(DataContext);
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useData deve ser usado dentro de <DataProvider>.');
+  return context;
 }
- 

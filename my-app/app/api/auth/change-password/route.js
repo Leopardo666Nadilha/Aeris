@@ -7,13 +7,12 @@ export async function POST(request) {
     const supabase = await createSupabaseServerClient();
 
     // 1. Obter o usuário da sessão segura
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // getUser() valida o token no servidor do Supabase; getSession() apenas lê o cookie.
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
+    if (userError || !user) {
       return NextResponse.json({ message: 'Não autorizado. Faça login novamente.' }, { status: 401 });
     }
-
-    const user = session.user;
 
     // --- Validação dos Dados ---
     if (!oldPassword || !newPassword) {

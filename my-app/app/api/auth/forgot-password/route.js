@@ -1,11 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient, findUser } from '@/lib/supabase-admin';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 
 // Rota para solicitar a redefinição de senha
 export async function POST(request) {
-  const { email } = await request.json();
+  const { email: rawEmail } = await request.json().catch(() => ({}));
+  const email = String(rawEmail || '').trim().toLowerCase();
 
   if (!email) {
     return NextResponse.json({ message: 'E-mail é obrigatório.' }, { status: 400 });
@@ -13,19 +14,10 @@ export async function POST(request) {
 
   try {
     // Usamos o cliente admin para procurar e atualizar o usuário sem precisar de login
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SECRET_KEY
-    );
+    const supabaseAdmin = createSupabaseAdminClient();
 
-    // 1. Verificar se o usuário existe usando o método de admin
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-
-    if (listError) {
-      throw listError;
-    }
-
-    const user = users.find(u => u.email === email);
+    // 1. Verificar se o usuário existe (percorrendo todas as páginas de usuários)
+    const user = await findUser(supabaseAdmin, (u) => u.email?.toLowerCase() === email);
 
     // Se o usuário não for encontrado, retornamos uma mensagem genérica por segurança,
     // para evitar que alguém use a API para descobrir e-mails cadastrados.
@@ -47,7 +39,7 @@ export async function POST(request) {
     // 4. Salvar o token hash e a data de expiração no metadado do usuário
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       user.id,
-      { user_metadata: { password_reset_token: passwordResetToken, password_reset_expires: passwordResetExpires.toISOString() } }
+      { user_metadata: { ...user.user_metadata, password_reset_token: passwordResetToken, password_reset_expires: passwordResetExpires.toISOString() } }
     );
 
     if (updateError) {
@@ -55,12 +47,13 @@ export async function POST(request) {
     }
 
     // 5. Enviar o e-mail
-    const resetUrl = `${request.headers.get('origin')}/reset-password?token=${resetToken}`;
+    const origin = request.headers.get('origin') || request.nextUrl.origin;
+    const resetUrl = `${origin}/reset-password?token=${resetToken}`;
 
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
-      port: process.env.EMAIL_SERVER_PORT,
-      secure: true, // true para 465, false para outras portas
+      port: Number(process.env.EMAIL_SERVER_PORT),
+      secure: Number(process.env.EMAIL_SERVER_PORT) === 465, // TLS direto apenas na porta 465
       auth: {
         user: process.env.EMAIL_SERVER_USER,
         pass: process.env.EMAIL_SERVER_PASSWORD,
