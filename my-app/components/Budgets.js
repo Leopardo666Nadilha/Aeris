@@ -1,40 +1,54 @@
 'use client';
 
 import Link from 'next/link';
+import { LuChevronRight, LuTarget } from 'react-icons/lu';
 import { useData } from '../lib/DataContext';
-import MonthGoals from './MonthGoals';
+import { budgetsWithProgress } from '../lib/finance';
+import BudgetRow from './BudgetRow';
 
-const Budgets = () => {
-  const { transactions, budgets, loading } = useData();
+/** Prévia dos três orçamentos mais próximos do limite no mês atual. */
+export default function Budgets() {
+  const { transactions, budgets } = useData();
 
-  // Adiciona uma verificação de carregamento.
-  // Isso impede que o componente tente renderizar antes que os dados estejam prontos.
-  if (loading) {
-    return <p>Carregando metas...</p>;
-  }
-
-  const goalsForDisplay = budgets
-    .filter(budget => budget.budget_value > 0) // Mostra apenas metas com valor definido
-    .map(budget => {
-      const current = transactions
-        .filter(t => t.category_name === budget.category_name)
-        .reduce((sum, t) => sum + t.value, 0);
-      return { ...budget, current, progress: budget.budget_value > 0 ? (current / budget.budget_value) : 0 };
-    })
+  const goals = budgetsWithProgress(
+    budgets.filter((b) => b.budget_value > 0),
+    transactions
+  )
     .sort((a, b) => b.progress - a.progress || b.budget_value - a.budget_value)
     .slice(0, 3);
 
-  return goalsForDisplay.length > 0 ? (
-    <>
-      <MonthGoals goals={goalsForDisplay} />
-      <Link href='/dashboard' className='cta-button'>Ver Dashboard Completo</Link>
-    </>
-  ) : (
-    <>
-    <h3>Comece a planejar seus gastos</h3>
-    <p>Crie orçamentos para suas categorias e acompanhe seu progresso diretamente aqui.</p><Link href='/dashboard/budget' className='cta-button'>Comece a planejar</Link>
-    </>
+  return (
+    <section className="card">
+      <div className="card-header">
+        <h2 className="card-title">Orçamentos do mês</h2>
+        {goals.length > 0 && (
+          <Link href="/dashboard" className="card-link">
+            Ver tudo <LuChevronRight aria-hidden="true" />
+          </Link>
+        )}
+      </div>
+      {goals.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {goals.map((goal) => (
+            <BudgetRow key={goal.id} budget={goal} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <span className="empty-state-icon" aria-hidden="true">
+            <LuTarget />
+          </span>
+          <h3>Planeje seus gastos</h3>
+          <p>
+            {budgets.length > 0
+              ? 'Defina uma meta mensal para suas categorias e acompanhe o progresso aqui.'
+              : 'Crie orçamentos por categoria e acompanhe o progresso aqui.'}
+          </p>
+          <Link href="/dashboard/budget" className="btn btn-secondary btn-sm">
+            {budgets.length > 0 ? 'Definir metas' : 'Criar orçamento'}
+          </Link>
+        </div>
+      )}
+    </section>
   );
-};
-
-export default Budgets;
+}

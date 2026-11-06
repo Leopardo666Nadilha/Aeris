@@ -1,37 +1,141 @@
-.graphContainer {
+.wrapper {
   display: flex;
-  flex-direction: column; /* Empilha o gráfico e os detalhes */
+  flex-direction: column;
   align-items: center;
-  margin: 2rem auto;
-  position: relative;
+  gap: 1.25rem;
 }
 
-.donutSlice {
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out;
-}
-
-/* Efeito de hover apenas em dispositivos que suportam (ex: com mouse) */
-@media (hover: hover) and (pointer: fine) {
-  .donutSlice:hover {
-    transform: scale(1.05);
+@media (min-width: 560px) {
+  .wrapper {
+    flex-direction: row;
+    align-items: center;
+    gap: 2rem;
   }
 }
 
-/* Estilo para a caixa de informação */
-.infoBox {
-  margin-top: 1.5rem;
+.chart {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.chart svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.slice {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.dimmed {
+  opacity: 0.35;
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2.5rem;
   text-align: center;
+  pointer-events: none;
 }
 
-.infoText {
-  font-size: 1rem;
-  color: var(--color-text);
-  font-family: var(--font-inter), sans-serif;
+.centerLabel {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.centerValue {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.centerPercent {
+  font-size: 0.7rem;
+  color: var(--color-text-subtle);
+}
+
+.empty {
+  max-width: 28ch;
+  font-size: 0.9rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 560px) {
+  .empty {
+    text-align: left;
+  }
+}
+
+.legend {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 2px;
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* Estilo para o texto em negrito dentro do parágrafo */
-.infoText strong { /* O texto em negrito terá a mesma cor do texto principal */
-  color: var(--color-text);
+.legendItem {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.875rem;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.legendItem:hover,
+.legendActive {
+  background: var(--color-surface-2);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+.legendName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendPercent {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-subtle);
+}
+
+.legendValue {
+  min-width: 5.5rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }

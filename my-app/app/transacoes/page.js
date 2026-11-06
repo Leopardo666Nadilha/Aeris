@@ -1,241 +1,212 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { IoIosArrowBack } from 'react-icons/io'; // Ícone de voltar
-import { FaPencilAlt, FaTrash } from 'react-icons/fa'; // Ícones para ações
+import { useMemo, useState } from 'react';
+import { LuInbox } from 'react-icons/lu';
+import PageHeader, { PageLoader } from '../../components/PageHeader';
+import SegmentedControl from '../../components/SegmentedControl';
+import TransactionRow from '../../components/TransactionRow';
+import TransactionForm from '../../components/TransactionForm';
+import Modal from '../../components/Modal';
 import { useData } from '../../lib/DataContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import Modal from '../../components/Modal'; // Componente de Modal
-import styles from './Transacoes.module.css'; // O Header já não é importado aqui
+import { formatDayLabel, formatMonthLabel, monthKey, sortByDateDesc, sumValues } from '../../lib/finance';
+import styles from './Transacoes.module.css';
+
+const TYPE_FILTERS = [
+  { value: 'all', label: 'Tudo' },
+  { value: 'expense', label: 'Gastos' },
+  { value: 'income', label: 'Recebimentos' },
+];
 
 export default function TransacoesPage() {
-  const { formatCurrency } = useCurrency(); // 2. Obtém a função de formatação
+  const { formatCurrency } = useCurrency();
   const {
     transactions,
     incomes,
-    categories,
+    budgets,
+    loading,
     updateTransaction,
     removeTransaction,
     updateIncome,
     removeIncome,
   } = useData();
+
   const [filterMonth, setFilterMonth] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [editing, setEditing] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Estados para controlar os modais
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const allItems = useMemo(
+    () =>
+      sortByDateDesc([
+        ...transactions.map((t) => ({ ...t, type: 'expense' })),
+        ...incomes.map((i) => ({ ...i, type: 'income' })),
+      ]),
+    [transactions, incomes]
+  );
 
-  const allTransactions = useMemo(() => {
-    const expenses = transactions.map(t => ({ ...t, label: t.description, type: 'expense' }));
-    const revenues = incomes.map(i => ({ ...i, value: i.value, label: i.description, type: 'income' }));
+  // Meses com movimentação, do mais recente para o mais antigo
+  const availableMonths = useMemo(
+    () => [...new Set(allItems.map((item) => monthKey(item.created_at)))],
+    [allItems]
+  );
 
-    // Combina os dois arrays
-    const combined = [...expenses, ...revenues];
-    
-    // Ordena por data (usando a propriedade 'created_at'), do mais recente para o mais antigo
-    combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const filtered = useMemo(
+    () =>
+      allItems.filter(
+        (item) =>
+          (filterMonth === 'all' || monthKey(item.created_at) === filterMonth) &&
+          (filterType === 'all' || item.type === filterType)
+      ),
+    [allItems, filterMonth, filterType]
+  );
 
-    return combined;
-  }, [transactions, incomes]);
-
-  // Gera a lista de meses disponíveis para o filtro, com base nas transações existentes.
-  const availableMonths = useMemo(() => {
-    const months = new Set();
-    allTransactions.forEach(item => {
-      const itemDate = new Date(item.created_at);
-      const year = itemDate.getFullYear();
-      const month = (itemDate.getMonth() + 1).toString().padStart(2, '0'); // Adiciona zero à esquerda se necessário
-      months.add(`${year}-${month}`);
-    });
-    return Array.from(months);
-  }, [allTransactions]);
-
-  // Filtra as transações com base no mês selecionado.
-  const filteredTransactions = useMemo(() => {
-    if (filterMonth === 'all') {
-      return allTransactions;
+  // Agrupa por dia para a lista
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const item of filtered) {
+      const label = formatDayLabel(item.created_at);
+      if (!map.has(label)) map.set(label, []);
+      map.get(label).push(item);
     }
-    return allTransactions.filter(item => {
-      const itemDate = new Date(item.created_at);
-      const year = itemDate.getFullYear();
-      const month = (itemDate.getMonth() + 1).toString().padStart(2, '0');
-      return `${year}-${month}` === filterMonth;
-    });
-  }, [allTransactions, filterMonth]);
+    return [...map.entries()];
+  }, [filtered]);
 
-  // --- Manipuladores para os Modais ---
+  const totalIn = sumValues(filtered.filter((i) => i.type === 'income'));
+  const totalOut = sumValues(filtered.filter((i) => i.type === 'expense'));
+  const categoryNames = [...new Set(budgets.map((b) => b.category_name))];
 
-  const handleOpenEditModal = (item) => {
-    setSelectedItem(item);
-    setIsEditModalOpen(true);
+  if (loading) return <PageLoader />;
+
+  const handleSave = async (payload) => {
+    const result =
+      editing.type === 'expense'
+        ? await updateTransaction(editing.id, payload)
+        : await updateIncome(editing.id, payload);
+    if (!result.error) setEditing(null);
+    return result;
   };
 
-  const handleOpenDeleteModal = (item) => {
-    setSelectedItem(item);
-    setIsDeleteModalOpen(true);
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    if (deleting.type === 'expense') await removeTransaction(deleting.id);
+    else await removeIncome(deleting.id);
+    setIsDeleting(false);
+    setDeleting(null);
   };
-
-  const handleCloseModals = () => {
-    setIsEditModalOpen(false);
-    setIsDeleteModalOpen(false);
-    setSelectedItem(null);
-  };
-
-  const handleSaveChanges = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const updatedData = {
-      description: formData.get('description'),
-      value: parseFloat(formData.get('value')),
-    };
-
-    if (selectedItem.type === 'expense') {
-      updatedData.category_name = formData.get('category');
-      updateTransaction(selectedItem.id, updatedData);
-    } else {
-      updateIncome(selectedItem.id, updatedData);
-    }
-
-    handleCloseModals();
-  };
-
-  const handleDeleteItem = () => {
-    if (!selectedItem) return;
-
-    if (selectedItem.type === 'expense') {
-      removeTransaction(selectedItem.id);
-    } else {
-      removeIncome(selectedItem.id);
-    }
-
-    handleCloseModals();
-  };
-
 
   return (
-    <>
-      <main>
-        {/* Botão de voltar adicionado, utilizando o estilo do CSS Module local */}
-        <Link href="/" className={styles.backButton}>
-          <IoIosArrowBack size={24} />
-          Voltar
-        </Link>
-        <h1 className={styles.title}>Histórico de Transações</h1>
-        <div className={styles.filterContainer}>
-          <label htmlFor="month-filter">Filtrar por mês:</label>
-          <select 
-            id="month-filter"
-            className={styles.monthFilter} 
-            value={filterMonth} 
-            onChange={(e) => setFilterMonth(e.target.value)}
-          >
-            <option value="all">Todos os meses</option>
-            {availableMonths.map(month => {
-              const [year, monthNum] = month.split('-');
-              const date = new Date(year, monthNum - 1);
-              // Formata o nome do mês para exibição (ex: "Novembro/2025")
-              const monthName = date.toLocaleString('pt-BR', { month: 'long' });
-              const formattedLabel = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)}/${year}`;
-              return (
-                <option key={month} value={month}>
-                  {formattedLabel}
-                </option>
-              );
-            })}
-          </select>
+    <div className="fade-up">
+      <PageHeader title="Transações" subtitle="Todo o seu histórico de gastos e recebimentos." />
+
+      <div className={styles.toolbar}>
+        <SegmentedControl options={TYPE_FILTERS} value={filterType} onChange={setFilterType} label="Tipo" size="sm" />
+        <select
+          className={`input ${styles.monthSelect}`}
+          value={filterMonth}
+          onChange={(e) => setFilterMonth(e.target.value)}
+          aria-label="Filtrar por mês"
+        >
+          <option value="all">Todos os meses</option>
+          {availableMonths.map((month) => (
+            <option key={month} value={month}>
+              {formatMonthLabel(month)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.summary}>
+        <div className={styles.summaryItem}>
+          <span>Entradas</span>
+          <strong className="amount amount-income">{formatCurrency(totalIn)}</strong>
         </div>
-
-        <div className={styles.transactionList} id='transacoes'>
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((item, index) => (
-              <div key={index} className={styles.transactionItem}>
-                <div className={styles.transactionInfo}>
-                  <div className={styles.transactionDetails}>
-                    <span className={styles.transactionLabel}>{item.label}</span>
-                    <span className={styles.transactionDate}>{/* Usa a propriedade correta 'created_at' */}
-                      {new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
-                  </div>
-                  <span className={item.type === 'income' ? styles.incomeValue : styles.expenseValue}>
-                    {item.type === 'income' ? '+ ' : '- '}{formatCurrency(item.value)}
-                  </span>
-                </div>
-                <div className={styles.transactionActions}>
-                  <button onClick={() => handleOpenEditModal(item)} className={styles.actionButton} aria-label="Editar">
-                    <FaPencilAlt />
-                  </button>
-                  <button onClick={() => handleOpenDeleteModal(item)} className={`${styles.actionButton} ${styles.deleteButton}`} aria-label="Excluir">
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className={styles.noTransactions}>
-              <p>Nenhuma transação registrada ainda.</p>
-              <p>Use o botão &lsquo;+&rsquo; para adicionar seu primeiro gasto ou recebimento!</p>
-            </div>
-          )}
+        <div className={styles.summaryItem}>
+          <span>Saídas</span>
+          <strong className="amount">{formatCurrency(totalOut)}</strong>
         </div>
-      </main>
+        <div className={styles.summaryItem}>
+          <span>Resultado</span>
+          <strong className={`amount ${totalIn - totalOut < 0 ? styles.negative : ''}`}>
+            {formatCurrency(totalIn - totalOut)}
+          </strong>
+        </div>
+      </div>
 
-      {/* Modal de Edição */}
-      {selectedItem && (
-        <Modal isOpen={isEditModalOpen} onClose={handleCloseModals} title={`Editar ${selectedItem.type === 'income' ? 'Renda' : 'Gasto'}`}>
-          <form onSubmit={handleSaveChanges} className={styles.modalForm}>
-            <div className={styles.formGroup}>
-              <label htmlFor="description">Descrição</label>
-              <input type="text" id="description" name="description" defaultValue={selectedItem.description} required />
+      <section className="card">
+        {groups.length > 0 ? (
+          groups.map(([label, items]) => (
+            <div key={label} className={styles.group}>
+              <h2 className={styles.groupTitle}>{label}</h2>
+              <ul className={styles.list}>
+                {items.map((item) => (
+                  <TransactionRow
+                    key={`${item.type}-${item.id}`}
+                    item={item}
+                    type={item.type}
+                    showDate={false}
+                    onEdit={setEditing}
+                    onDelete={setDeleting}
+                  />
+                ))}
+              </ul>
             </div>
-            <div className={styles.formGroup}>
-              <label htmlFor="value">Valor</label>
-              <input type="number" id="value" name="value" defaultValue={selectedItem.value} step="0.01" required />
-            </div>
-            {selectedItem.type === 'expense' && (
-              <div className={styles.formGroup}>
-                <label htmlFor="category">Categoria</label>
-                <select id="category" name="category" defaultValue={selectedItem.category_name} required>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div className={styles.modalActions}>
-              <button type="button" onClick={handleCloseModals} className={`${styles.modalButton} ${styles.cancelButton} ${styles.cancelButtonBudget}`}>
-                Cancelar
-              </button>
-              <button type="submit" className="cta-button">
-                Salvar Alterações
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* Modal de Exclusão */}
-      {selectedItem && (
-        <Modal isOpen={isDeleteModalOpen} onClose={handleCloseModals} title="Confirmar Exclusão">
-          <div className={styles.modalContent}>
+          ))
+        ) : (
+          <div className="empty-state">
+            <span className="empty-state-icon" aria-hidden="true">
+              <LuInbox />
+            </span>
+            <h3>{allItems.length === 0 ? 'Nenhuma transação ainda' : 'Nada encontrado'}</h3>
             <p>
-              Você tem certeza que deseja excluir a {selectedItem.type === 'income' ? 'renda' : 'transação'}: <strong>&ldquo;{selectedItem.description}&rdquo;</strong>?
+              {allItems.length === 0
+                ? 'Use o botão + para registrar seu primeiro gasto ou recebimento.'
+                : 'Nenhuma movimentação corresponde aos filtros selecionados.'}
             </p>
-            <p className={styles.warningText}>
-              Esta ação não pode ser desfeita.
-            </p>
-            <div className={styles.modalActions}>
-              <button type="button" onClick={handleCloseModals} className={`${styles.modalButton} ${styles.cancelButton} ${styles.cancelButtonExclude}`}>
-                Cancelar
-              </button>
-              <button onClick={handleDeleteItem} className="destructive-button">
-                Excluir
-              </button>
-            </div>
           </div>
-        </Modal>
-      )}
-    </>
+        )}
+      </section>
 
+      <Modal
+        isOpen={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title={editing?.type === 'income' ? 'Editar recebimento' : 'Editar gasto'}
+      >
+        {editing && (
+          <TransactionForm
+            key={`${editing.type}-${editing.id}`}
+            type={editing.type}
+            idPrefix="edit"
+            initial={editing}
+            categoryNames={categoryNames}
+            onSubmit={handleSave}
+            onCancel={() => setEditing(null)}
+            onDelete={() => {
+              setDeleting(editing);
+              setEditing(null);
+            }}
+            submitLabel="Salvar alterações"
+          />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(deleting)}
+        onClose={() => setDeleting(null)}
+        title="Excluir movimentação?"
+        description={deleting ? `“${deleting.description}” será excluído permanentemente.` : ''}
+        size="sm"
+      >
+        <div className="form-actions">
+          <button type="button" className="btn btn-secondary" onClick={() => setDeleting(null)}>
+            Cancelar
+          </button>
+          <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? 'Excluindo…' : 'Excluir'}
+          </button>
+        </div>
+      </Modal>
+    </div>
   );
 }

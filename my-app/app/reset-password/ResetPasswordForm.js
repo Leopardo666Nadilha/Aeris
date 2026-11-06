@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import styles from '../login/Login.module.css';
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -15,15 +14,13 @@ export default function ResetPasswordForm() {
   const [message, setMessage] = useState('');
   const [submitError, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const error = submitError || (token ? '' : 'Token de redefinição não encontrado ou inválido.');
+  const error = submitError || (token ? '' : 'Link de redefinição inválido ou incompleto. Solicite um novo.');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      setError('As senhas não coincidem.');
-      return;
-    }
+    if (password.length < 6) return setError('A senha deve ter pelo menos 6 caracteres.');
+    if (password !== confirmPassword) return setError('As senhas não coincidem.');
 
     setIsLoading(true);
     setError('');
@@ -35,19 +32,11 @@ export default function ResetPasswordForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Falha ao redefinir a senha.');
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Falha ao redefinir a senha.');
-      }
-
-      setMessage(data.message);
-      // Redireciona para o login após sucesso
-      setTimeout(() => {
-        router.push('/login');
-      }, 3000);
-
+      setMessage(`${data.message} Redirecionando para o login…`);
+      setTimeout(() => router.push('/login'), 3000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -56,46 +45,55 @@ export default function ResetPasswordForm() {
   };
 
   return (
-    <div className={styles.formContainer}>
-      <h1 className={styles.title}>Crie uma Nova Senha</h1>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGroup}>
-          <label htmlFor="password">Nova Senha</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={!token}
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="confirmPassword">Confirme a Nova Senha</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            disabled={!token}
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="form">
+      <div className="field">
+        <label className="field-label" htmlFor="password">
+          Nova senha
+        </label>
+        <input
+          className="input"
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          minLength={6}
+          required
+          disabled={!token || Boolean(message)}
+        />
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="confirmPassword">
+          Confirme a nova senha
+        </label>
+        <input
+          className="input"
+          type="password"
+          id="confirmPassword"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          autoComplete="new-password"
+          required
+          disabled={!token || Boolean(message)}
+        />
+      </div>
 
-        {error && <p className={styles.error}>{error}</p>}
-        {message && <p className={styles.message}>{message}</p>}
-
-        <button type="submit" className={styles.submitButton} disabled={isLoading || !token}>
-          {isLoading ? 'Redefinindo...' : 'Redefinir Senha'}
-        </button>
-      </form>
-      {message && (
-        <div className={styles.registerPrompt}>
-          <Link href="/login" className={styles.link}>
-            Ir para o Login
-          </Link>
-        </div>
+      {error && (
+        <p className="alert alert-error" role="alert">
+          {error}
+        </p>
       )}
-    </div>
+      {message && <p className="alert alert-success">{message}</p>}
+
+      {token ? (
+        <button type="submit" className="btn btn-primary btn-block" disabled={isLoading || Boolean(message)}>
+          {isLoading ? 'Redefinindo…' : 'Redefinir senha'}
+        </button>
+      ) : (
+        <Link href="/forgot-password" className="btn btn-primary btn-block">
+          Solicitar novo link
+        </Link>
+      )}
+    </form>
   );
 }

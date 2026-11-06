@@ -1,67 +1,65 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import BalanceCard from '../components/BalanceCard';
-import ExpandableSection from '../components/ExpandableSection';
 import DonutGraph from '../components/DonutGraph';
-import styles from './page.module.css';
-import { useData } from '../lib/DataContext';
-import RecentExpenses from '../components/RecentExpenses';
+import RecentTransactions from '../components/RecentTransactions';
 import Budgets from '../components/Budgets';
-import RecentIncomes from '../components/RecentIncomes';
+import SegmentedControl from '../components/SegmentedControl';
+import { PageLoader } from '../components/PageHeader';
+import { useData } from '../lib/DataContext';
+import { currentMonthKey, isInMonth, spendingByCategory } from '../lib/finance';
+import styles from './page.module.css';
+
+const PERIODS = [
+  { value: 'month', label: 'Este mês' },
+  { value: 'all', label: 'Tudo' },
+];
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
 
 export default function HomePage() {
-  const { transactions, loading } = useData(); // 1. Obtenha o estado 'loading' do contexto
+  const { transactions, loading, user } = useData();
+  const [period, setPeriod] = useState('month');
 
-  // 2. Se os dados ainda estiverem carregando, exiba um indicador de carregamento.
-  //    Isso impede que os componentes filhos renderizem com dados vazios.
-  if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner}></div>
-        <p>Carregando seus dados...</p>
-      </div>
-    );
-  }
+  const chartData = useMemo(() => {
+    const month = currentMonthKey();
+    const source = period === 'month' ? transactions.filter((t) => isInMonth(t, month)) : transactions;
+    return spendingByCategory(source);
+  }, [transactions, period]);
 
-  // 1. Agrupar transações por categoria
-  let aggregated = transactions.reduce((acc, transaction) => {
-    const existingCategory = acc.find(item => item.category_name === transaction.category_name);
-    if (existingCategory) {
-      existingCategory.value += transaction.value;
-    } else {
-      acc.push({ category_name: transaction.category_name, value: transaction.value });
-    }
-    return acc;
-  }, []);
+  if (loading) return <PageLoader />;
 
-  // 2. Ordenar por valor (do maior para o menor)
-  aggregated.sort((a, b) => b.value - a.value);
-
-  // 3. Se houver mais de 6 categorias, agrupar as menores em "Outros"
-  let finalDataForGraph = aggregated;
-  if (aggregated.length > 6) {
-    const top5 = aggregated.slice(0, 5);
-    const othersSum = aggregated.slice(5).reduce((sum, item) => sum + item.value, 0);
-    finalDataForGraph = [...top5, { category_name: 'Outros', value: othersSum }];
-  }
+  const firstName = (user?.user_metadata?.full_name || '').split(' ')[0];
 
   return (
-    // O <main> já é fornecido pelo layout.js e estilizado pelo globals.css
-    // Adicionamos um wrapper para garantir que todos os elementos da página
-    // partilhem o mesmo contexto de largura e alinhamento.
-    <div className={styles.contentWrapper}>
-      <BalanceCard />
-      <DonutGraph data={finalDataForGraph} />
-      <div className={styles.expandableSectionsContainer}>
-        <ExpandableSection title="Gastos Recentes">
-          <RecentExpenses />
-        </ExpandableSection>
-        <ExpandableSection title="Metas e Orçamentos">
-          <Budgets />
-        </ExpandableSection>
-        <ExpandableSection title="Rendas do mês">
-          <RecentIncomes />
-        </ExpandableSection>
+    <div className={`${styles.page} fade-up`}>
+      <h1 className={styles.greeting} suppressHydrationWarning>
+        {greeting()}
+        {firstName ? `, ${firstName}` : ''}
+      </h1>
+
+      <div className={styles.topGrid}>
+        <BalanceCard />
+
+        <section className="card">
+          <div className="card-header">
+            <h2 className="card-title">Gastos por categoria</h2>
+            <SegmentedControl options={PERIODS} value={period} onChange={setPeriod} label="Período" size="sm" />
+          </div>
+          <DonutGraph data={chartData} />
+        </section>
+      </div>
+
+      <div className={styles.bottomGrid}>
+        <RecentTransactions type="expense" />
+        <Budgets />
+        <RecentTransactions type="income" />
       </div>
     </div>
   );

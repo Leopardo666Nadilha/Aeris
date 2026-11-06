@@ -1,90 +1,75 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import styles from './Perfil.module.css';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { IoIosArrowBack } from 'react-icons/io';
-import { CgProfile } from 'react-icons/cg';
+import { LuChevronRight, LuKeyRound, LuLogOut, LuTarget, LuTrash2, LuUserX } from 'react-icons/lu';
+import PageHeader, { PageLoader } from '../../components/PageHeader';
+import Modal from '../../components/Modal';
+import ThemeToggleButton from '../../lib/ThemeToggleButton';
 import { useData } from '../../lib/DataContext';
-import { useRouter } from 'next/navigation';
-import { useCurrency } from '@/contexts/CurrencyContext'; // Importa o hook de moeda
-import Modal from '../../components/Modal'; // Componente Modal
-import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { sumValues } from '../../lib/finance';
+import { hardNavigate } from '../../lib/navigation';
+import styles from './Perfil.module.css';
+
+const postJson = async (url, body) => {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'Algo deu errado. Tente novamente.');
+  return data;
+};
+
+// Recarga completa: zera todos os contextos depois de sair/excluir a conta
+const goToLogin = () => hardNavigate('/login');
 
 export default function PerfilPage() {
-  const { transactions, incomes, balance } = useData();
+  const { transactions, incomes, balance, user, isGuest, loading } = useData();
   const { currency, setCurrency, supportedCurrencies, formatCurrency } = useCurrency();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false); // Estado para o modal de logout
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // Estado para o modal de exclusão
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [modal, setModal] = useState(null); // 'password' | 'logout' | 'delete' | null
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [passwordForDelete1, setPasswordForDelete1] = useState(''); // Senha 1 para exclusão
-  const [passwordForDelete2, setPasswordForDelete2] = useState(''); // Senha 2 para exclusão
-  const [userEmail, setUserEmail] = useState('');
-  const [userName, setUserName] = useState('');
-  const router = useRouter();
-  const supabase = createSupabaseBrowserClient();
 
-  // Calcula os totais usando useMemo para eficiência
-  const totalGasto = useMemo(() => transactions.reduce((sum, transaction) => sum + transaction.value, 0), [transactions]);
-  const totalMovimentacoes = useMemo(() => transactions.length + incomes.length, [transactions, incomes]);
+  const totalGasto = useMemo(() => sumValues(transactions), [transactions]);
+  const totalMovimentacoes = transactions.length + incomes.length;
 
-  const handleCurrencyChange = (event) => {
-    setCurrency(event.target.value);
+  if (loading) return <PageLoader />;
+
+  const userName = user?.user_metadata?.full_name || (isGuest ? 'Convidado' : 'Usuário');
+  const initials = userName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('');
+
+  const openModal = (name) => {
+    setError('');
+    setSuccess('');
+    setModal(name);
   };
-
-  // Busca os dados do usuário apenas uma vez
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        // O middleware já deve ter redirecionado, mas isso é uma segurança extra.
-        router.push('/login');
-        return;
-      }
-
-      // O nome completo é salvo em 'user_metadata' durante o registro
-      setUserName(user.user_metadata?.full_name || 'Usuário');
-      setUserEmail(user.email);
-    };
-
-    fetchUser();
-    // A dependência do supabase garante que, se o cliente mudar, a função roda de novo.
-  }, [supabase, router]);
+  const closeModal = () => setModal(null);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-
-    if (newPassword !== confirmPassword) {
-      setError('As novas senhas não coincidem.');
-      return;
-    }
+    const form = new FormData(e.currentTarget);
+    const oldPassword = form.get('oldPassword');
+    const newPassword = form.get('newPassword');
+    if (newPassword !== form.get('confirmPassword')) return setError('As novas senhas não coincidem.');
+    if (String(newPassword).length < 6) return setError('A nova senha deve ter pelo menos 6 caracteres.');
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ oldPassword, newPassword }), // Não enviamos mais o e-mail!
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Falha ao alterar a senha.');
-      }
-
+      const data = await postJson('/api/auth/change-password', { oldPassword, newPassword });
       setSuccess(data.message);
-      setTimeout(() => setIsModalOpen(false), 2000); // Fecha o modal após 2s
+      setTimeout(closeModal, 1500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -94,285 +79,238 @@ export default function PerfilPage() {
 
   const handleLogout = async () => {
     setIsLoading(true);
+    setError('');
     try {
-      const res = await fetch('/api/auth/logout', { method: 'POST' });
-      if (!res.ok) {
-        throw new Error('Falha ao tentar sair.');
-      }
-      // Após o logout bem-sucedido, redireciona para a página de login
-      router.push('/login');
+      await postJson('/api/auth/logout');
+      goToLogin();
     } catch (err) {
-      setError(err.message); // Mostra um erro se o logout falhar
-    } finally {
+      setError(err.message);
       setIsLoading(false);
+    }
+  };
+
+  // O cadastro só é acessível sem sessão (o proxy redireciona usuários logados)
+  const handleGoToRegister = async () => {
+    try {
+      await postJson('/api/auth/logout');
+    } finally {
+      hardNavigate('/register');
     }
   };
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (passwordForDelete1 !== passwordForDelete2) {
-      setError('As senhas digitadas não coincidem.');
-      return;
-    }
-
-    if (!passwordForDelete1) {
-      setError('Por favor, digite sua senha.');
-      return;
-    }
+    const form = new FormData(e.currentTarget);
+    const password = form.get('password');
+    if (!password) return setError('Digite sua senha para confirmar.');
+    if (password !== form.get('confirm')) return setError('As senhas digitadas não coincidem.');
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: passwordForDelete1 }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Falha ao excluir a conta.');
-      }
-
-      alert('Sua conta foi excluída com sucesso.');
-      router.push('/login'); // Redireciona para o login após a exclusão
+      await postJson('/api/auth/delete', { password });
+      goToLogin();
     } catch (err) {
       setError(err.message);
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main>
-      <section className={styles.container}>
-        {/* Botão de voltar */}
-        <Link href="/" className={styles.backButton}>
-          <IoIosArrowBack size={24} />
-          Voltar
-        </Link>
+    <div className="fade-up">
+      <PageHeader title="Perfil" />
 
-        <h1 className={styles.title}>Perfil do Usuário</h1>
+      <div className={styles.layout}>
+        <div className={styles.column}>
+          <section className={`card ${styles.identity}`}>
+            <div className={styles.avatar} aria-hidden="true">
+              {initials || '?'}
+            </div>
+            <div className={styles.identityText}>
+              <p className={styles.name}>
+                {userName}
+                {isGuest && <span className={styles.badge}>Convidado</span>}
+              </p>
+              <p className={styles.email}>{user?.email || 'Acesso temporário sem e-mail'}</p>
+            </div>
+          </section>
 
-        <div className={styles.profileIconContainer}>
-          <CgProfile size={100} color="var(--color-primary)" />
+          <section className={`card ${styles.stats}`}>
+            <div>
+              <span>Saldo</span>
+              <strong className={balance < 0 ? styles.negative : ''}>{formatCurrency(balance)}</strong>
+            </div>
+            <div>
+              <span>Total gasto</span>
+              <strong>{formatCurrency(totalGasto)}</strong>
+            </div>
+            <div>
+              <span>Movimentações</span>
+              <strong>{totalMovimentacoes}</strong>
+            </div>
+          </section>
+
+          {isGuest && (
+            <p className="alert alert-warning">
+              Você está usando uma conta de convidado. Os dados de convidados são apagados automaticamente todos os
+              dias.{' '}
+              <button type="button" className={`link ${styles.inlineLink}`} onClick={handleGoToRegister}>
+                Crie uma conta
+              </button>{' '}
+              para guardar suas finanças.
+            </p>
+          )}
         </div>
 
-        <div className={styles.info}>
-          <p className={styles.name} id="nome-usuario">{userName}</p>
-          <p className={styles.email} id="email-usuario">{userEmail}</p>
+        <div className={styles.column}>
+          <section className="card">
+            <h2 className={styles.sectionTitle}>Preferências</h2>
+            <div className={styles.settingRow}>
+              <label htmlFor="currency-select">
+                <span className={styles.settingLabel}>Moeda de exibição</span>
+                <span className={styles.settingHint}>Apenas formata os valores, sem conversão.</span>
+              </label>
+              <select
+                id="currency-select"
+                className={`input ${styles.settingSelect}`}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                {Object.entries(supportedCurrencies).map(([code, { symbol }]) => (
+                  <option key={code} value={code}>
+                    {code} ({symbol})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.settingRow}>
+              <div>
+                <span className={styles.settingLabel}>Tema</span>
+                <span className={styles.settingHint}>Alterna entre claro e escuro.</span>
+              </div>
+              <ThemeToggleButton className={`icon-btn ${styles.themeButton}`} />
+            </div>
+          </section>
+
+          <section className="card">
+            <h2 className={styles.sectionTitle}>Conta</h2>
+            <nav className={styles.menu}>
+              <Link href="/dashboard/budget" className={styles.menuItem}>
+                <LuTarget aria-hidden="true" />
+                <span>Metas e categorias</span>
+                <LuChevronRight aria-hidden="true" className={styles.chevron} />
+              </Link>
+              {!isGuest && (
+                <button type="button" className={styles.menuItem} onClick={() => openModal('password')}>
+                  <LuKeyRound aria-hidden="true" />
+                  <span>Alterar senha</span>
+                  <LuChevronRight aria-hidden="true" className={styles.chevron} />
+                </button>
+              )}
+              <button type="button" className={styles.menuItem} onClick={() => openModal('logout')}>
+                <LuLogOut aria-hidden="true" />
+                <span>Sair</span>
+                <LuChevronRight aria-hidden="true" className={styles.chevron} />
+              </button>
+              {!isGuest && (
+                <button
+                  type="button"
+                  className={`${styles.menuItem} ${styles.danger}`}
+                  onClick={() => openModal('delete')}
+                >
+                  <LuTrash2 aria-hidden="true" />
+                  <span>Excluir conta</span>
+                  <LuChevronRight aria-hidden="true" className={styles.chevron} />
+                </button>
+              )}
+            </nav>
+          </section>
         </div>
+      </div>
 
-        {/* Banner de informações */}
-        <div className={styles.banner}>
-          <div className={styles.bannerItem}>
-            <span className={styles.bannerTitle}>Saldo</span>
-            <span className={styles.bannerValue}>{formatCurrency(balance)}</span>
+      <Modal isOpen={modal === 'password'} onClose={closeModal} title="Alterar senha">
+        <form onSubmit={handlePasswordChange} className="form">
+          <div className="field">
+            <label className="field-label" htmlFor="oldPassword">
+              Senha atual
+            </label>
+            <input className="input" type="password" id="oldPassword" name="oldPassword" autoComplete="current-password" required />
           </div>
-          <div className={styles.bannerItem}>
-            <span className={styles.bannerTitle}>Total gasto</span>
-            <span className={styles.bannerValue}>{formatCurrency(totalGasto)}</span>
+          <div className="field">
+            <label className="field-label" htmlFor="newPassword">
+              Nova senha
+            </label>
+            <input className="input" type="password" id="newPassword" name="newPassword" autoComplete="new-password" minLength={6} required />
+            <span className="field-hint">Mínimo de 6 caracteres.</span>
           </div>
-          <div className={styles.bannerItem}>
-            <span className={styles.bannerTitle}>Transações</span>
-            <span className={styles.bannerValue}>{totalMovimentacoes}</span>
+          <div className="field">
+            <label className="field-label" htmlFor="confirmPassword">
+              Confirmar nova senha
+            </label>
+            <input className="input" type="password" id="confirmPassword" name="confirmPassword" autoComplete="new-password" required />
           </div>
-        </div>
-
-        {/* Seletor de moeda */}
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '1.5rem',
-            backgroundColor: 'var(--color-card-background)',
-            borderRadius: '12px',
-            border: '2px solid var(--color-border)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-          }}
-        >
-          <label
-            htmlFor="currency-select"
-            style={{
-              display: 'block',
-              marginBottom: '10px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              color: 'var(--color-text)',
-            }}
-          >
-            Moeda de Exibição Padrão:
-          </label>
-
-          <select
-            id="currency-select"
-            value={currency}
-            onChange={handleCurrencyChange}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--color-card-background)',
-              border: '2px solid var(--color-border)',
-              color: 'var(--color-text)',
-              fontSize: '1rem',
-              appearance: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 10px center',
-              backgroundSize: '16px',
-            }}
-          >
-            {Object.keys(supportedCurrencies).map((currencyCode) => (
-              <option key={currencyCode} value={currencyCode}>
-                {currencyCode} ({supportedCurrencies[currencyCode].symbol})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Botões de Ação */}
-        <div className={styles.actionButtons}>
-          <Link href="/dashboard/budget" className={`${styles.actionButton} ${styles.fullWidthButton} cta-button`}>
-            Metas e Categorias
-          </Link>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className={`${styles.actionButton} cta-button`}
-          >
-            Alterar senha
-          </button>
-
-          <button
-            onClick={() => setIsLogoutModalOpen(true)} // Abre o modal de confirmação de logout
-            className={`${styles.actionButton} cta-button`}
-          >
-            Sair (logout)
-          </button>
-
-          <button
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="destructive-button">
-            Excluir conta
-          </button>
-        </div>
-      </section>
-
-      {/* Modal de Alterar Senha */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Alterar Senha"
-      >
-        <form onSubmit={handlePasswordChange} className={styles.modalForm}>
-          <div className={styles.formGroup}>
-            <label htmlFor="oldPassword">Senha Atual</label>
-            <input
-              type="password"
-              id="oldPassword"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="newPassword">Nova Senha</label>
-            <input
-              type="password"
-              id="newPassword"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="confirmPassword">Confirmar Nova Senha</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          {error && <p className={styles.error}>{error}</p>}
-          {success && <p className={styles.success}>{success}</p>}
-
-          <button
-            type="submit"
-            className="cta-button"
-            disabled={isLoading}
-            style={{ width: '100%', marginTop: '1rem' }}
-          >
-            {isLoading ? 'Alterando...' : 'Salvar Nova Senha'}
-          </button>
-        </form>
-      </Modal>
-
-      {/* Modal de Confirmação de Logout */}
-      <Modal
-        isOpen={isLogoutModalOpen}
-        onClose={() => setIsLogoutModalOpen(false)}
-        title="Confirmar Saída"
-      >
-        <div className={styles.modalContent}>
-          <p>Você tem certeza que deseja sair da sua conta?</p>
-          {error && <p className={styles.error}>{error}</p>}
-          <div className={styles.modalActions}>
-            <button onClick={() => setIsLogoutModalOpen(false)} className={`${styles.modalButton} ${styles.cancelButton}`}>
+          {error && <p className="alert alert-error">{error}</p>}
+          {success && <p className="alert alert-success">{success}</p>}
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={closeModal}>
               Cancelar
             </button>
-            <button onClick={handleLogout} className="cta-button" disabled={isLoading}>
-              {isLoading ? 'Saindo...' : 'Confirmar Saída'}
+            <button type="submit" className="btn btn-primary" disabled={isLoading}>
+              {isLoading ? 'Salvando…' : 'Salvar nova senha'}
             </button>
           </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={modal === 'logout'}
+        onClose={closeModal}
+        title="Sair da conta?"
+        description={isGuest ? 'Como convidado, você não poderá voltar a esta sessão depois de sair.' : 'Você poderá entrar novamente a qualquer momento.'}
+        size="sm"
+      >
+        {error && <p className="alert alert-error">{error}</p>}
+        <div className="form-actions">
+          <button type="button" className="btn btn-secondary" onClick={closeModal}>
+            Cancelar
+          </button>
+          <button type="button" className="btn btn-primary" onClick={handleLogout} disabled={isLoading}>
+            {isLoading ? 'Saindo…' : 'Sair'}
+          </button>
         </div>
       </Modal>
 
-      {/* Modal de Confirmação de Exclusão de Conta */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Excluir Conta Permanentemente"
-      >
-        <form onSubmit={handleDeleteAccount} className={styles.modalForm}>
-          <p className={styles.warningText}>
-            <strong>Atenção:</strong> Esta ação é irreversível. Todos os seus dados, incluindo transações e saldos, serão apagados permanentemente.
-          </p>
-          <p className={styles.warningText}>
-            Para confirmar, por favor, confirme sua senha nos campos abaixo.
-          </p>
-          <div className={styles.formGroup}>
-            <label htmlFor="delete-password-1">Senha</label>
-            <input
-              type="password"
-              id="delete-password-1"
-              value={passwordForDelete1}
-              onChange={(e) => setPasswordForDelete1(e.target.value)}
-              required
-            />
+      <Modal isOpen={modal === 'delete'} onClose={closeModal} title="Excluir conta permanentemente">
+        <form onSubmit={handleDeleteAccount} className="form">
+          <div className="alert alert-error" style={{ display: 'flex', gap: '0.6rem' }}>
+            <LuUserX aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>
+              Esta ação é irreversível. Todos os seus dados — transações, rendas e orçamentos — serão apagados.
+            </span>
           </div>
-          <div className={styles.formGroup}>
-            <label htmlFor="delete-password-2">Confirmar Senha</label>
-            <input
-              type="password"
-              id="delete-password-2"
-              value={passwordForDelete2}
-              onChange={(e) => setPasswordForDelete2(e.target.value)}
-              required
-            />
+          <div className="field">
+            <label className="field-label" htmlFor="delete-password">
+              Senha
+            </label>
+            <input className="input" type="password" id="delete-password" name="password" autoComplete="current-password" required />
           </div>
-          {error && <p className={styles.error}>{error}</p>}
-          <button type="submit" className="destructive-button" disabled={isLoading || passwordForDelete1 !== passwordForDelete2 || !passwordForDelete1} style={{ width: '100%', marginTop: '1rem' }}>
-            {isLoading ? 'Excluindo...' : 'Eu entendo, excluir minha conta'}
-          </button>
+          <div className="field">
+            <label className="field-label" htmlFor="delete-confirm">
+              Confirmar senha
+            </label>
+            <input className="input" type="password" id="delete-confirm" name="confirm" autoComplete="current-password" required />
+          </div>
+          {error && <p className="alert alert-error">{error}</p>}
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={closeModal}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-danger" disabled={isLoading}>
+              {isLoading ? 'Excluindo…' : 'Excluir minha conta'}
+            </button>
+          </div>
         </form>
       </Modal>
-    </main>
+    </div>
   );
 }

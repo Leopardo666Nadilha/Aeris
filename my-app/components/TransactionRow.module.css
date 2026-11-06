@@ -1,0 +1,110 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 0;
+}
+
+.clickable {
+  margin: 0 -0.5rem;
+  padding: 0.7rem 0.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.clickable:hover {
+  background: var(--color-surface-2);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  font-size: 1.05rem;
+}
+
+.income {
+  background: var(--color-income-soft);
+  color: var(--color-income);
+}
+
+.expense {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.label {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  overflow: hidden;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* No mobile a linha toda abre a edição (onde também é possível excluir) */
+.actions {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .clickable:hover {
+    background: transparent;
+  }
+
+  .actions {
+    display: flex;
+    margin-right: -0.5rem;
+  }
+
+  .actions :global(.icon-btn) {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .actions {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .row:hover .actions,
+  .row:focus-within .actions {
+    opacity: 1;
+  }
+}

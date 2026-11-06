@@ -1,61 +1,90 @@
 'use client';
 
 import Link from 'next/link';
-import styles from './Dashboard.module.css';
-import { useData } from '../../lib/DataContext';
+import { LuPencil, LuTarget } from 'react-icons/lu';
+import PageHeader, { PageLoader } from '../../components/PageHeader';
+import BudgetRow from '../../components/BudgetRow';
 import ProgressBar from '../../components/ProgressBar';
-import { useCurrency } from '@/contexts/CurrencyContext'; // Importa o hook de moeda
-import { IoIosArrowBack } from 'react-icons/io';
+import { useData } from '../../lib/DataContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { budgetsWithProgress, currentMonthKey, formatMonthLabel } from '../../lib/finance';
+import styles from './Dashboard.module.css';
 
 export default function DashboardPage() {
-  const { budgets, transactions } = useData();
-  const { formatCurrency } = useCurrency(); // Obtém a função de formatação
+  const { budgets, transactions, loading } = useData();
+  const { formatCurrency } = useCurrency();
 
-  // Calcula o progresso para exibir no dashboard
-  const budgetsWithProgress = budgets.map(budget => {
-    const current = transactions
-      .filter(t => t.category_name === budget.category_name)
-      .reduce((sum, t) => sum + t.value, 0);
-    return { ...budget, current };
-  });
+  if (loading) return <PageLoader />;
+
+  const items = budgetsWithProgress(budgets, transactions).sort((a, b) => b.progress - a.progress);
+  const totalBudget = items.reduce((sum, b) => sum + b.budget_value, 0);
+  const totalSpent = items.reduce((sum, b) => sum + b.current, 0);
+  const overCount = items.filter((b) => b.progress > 1).length;
+  const remaining = totalBudget - totalSpent;
 
   return (
-    <div className={styles.container}>
-      {/* Link para voltar à página inicial */}
-      <Link href="/" className={styles.backButton}>
-        <IoIosArrowBack size={24} />
-        Voltar
-      </Link>
-      <h1 className={styles.title}>Dashboard de Metas e Orçamentos</h1>
+    <div className="fade-up">
+      <PageHeader
+        title="Metas e orçamentos"
+        subtitle={`Acompanhamento de ${formatMonthLabel(currentMonthKey()).toLowerCase()}`}
+        actions={
+          budgets.length > 0 && (
+            <Link href="/dashboard/budget" className="btn btn-secondary btn-sm">
+              <LuPencil aria-hidden="true" /> Gerenciar
+            </Link>
+          )
+        }
+      />
 
       {budgets.length === 0 ? (
-        <>
-          <p className={styles.description}>
-            Bem-vindo ao seu painel de controle financeiro. Crie orçamentos,
-            defina metas e acompanhe seu progresso.
-          </p>
-          <Link href='/dashboard/budget' className='cta-button'>
-            Comece a planejar
-          </Link>
-        </>
+        <section className="card">
+          <div className="empty-state">
+            <span className="empty-state-icon" aria-hidden="true">
+              <LuTarget />
+            </span>
+            <h3>Nenhum orçamento criado</h3>
+            <p>Defina quanto quer gastar por categoria a cada mês e acompanhe seu progresso.</p>
+            <Link href="/dashboard/budget" className="btn btn-primary">
+              Começar a planejar
+            </Link>
+          </div>
+        </section>
       ) : (
-        <>
-          <section className={styles.summarySection}>
-            <h2>Resumo do seu Orçamento</h2>
-            {budgetsWithProgress.map((budget) => (
-              <div key={budget.id} className={styles.summaryItem}>
-                <div className={styles.summaryInfo}>
-                  <span className={styles.summaryCategoryName}>{budget.category_name}</span>
-                  <span className={styles.summaryValues}>{formatCurrency(budget.current)} / {formatCurrency(budget.budget_value)}</span>
-                </div>
-                <ProgressBar current={budget.current} goal={budget.budget_value} />
+        <div className={styles.layout}>
+          <section className={`card ${styles.summary}`}>
+            <span className="eyebrow">Orçamento total do mês</span>
+            <p className={styles.summaryValue}>
+              {formatCurrency(totalSpent)}
+              <span> de {formatCurrency(totalBudget)}</span>
+            </p>
+            <ProgressBar current={totalSpent} goal={totalBudget} label="Orçamento total" />
+            <dl className={styles.stats}>
+              <div>
+                <dt>{remaining >= 0 ? 'Disponível' : 'Acima do total'}</dt>
+                <dd className={remaining < 0 ? styles.negative : ''}>{formatCurrency(Math.abs(remaining))}</dd>
               </div>
-            ))}
+              <div>
+                <dt>Categorias</dt>
+                <dd>{items.length}</dd>
+              </div>
+              <div>
+                <dt>Estouradas</dt>
+                <dd className={overCount > 0 ? styles.negative : ''}>{overCount}</dd>
+              </div>
+            </dl>
           </section>
-          <Link href='/dashboard/budget' className={`${styles.dashboardButton} cta-button`}>
-            Editar Orçamento
-          </Link>
-        </>
+
+          <section className="card">
+            <div className="card-header">
+              <h2 className="card-title">Por categoria</h2>
+            </div>
+            <div className={styles.list}>
+              {items.map((budget) => (
+                <BudgetRow key={budget.id} budget={budget} />
+              ))}
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

@@ -1,57 +1,57 @@
-import { Inter, Merriweather } from 'next/font/google';
+import { Geist, Instrument_Serif } from 'next/font/google';
+import Script from 'next/script';
 import Header from '../components/Header';
 import AppLayout from '../components/AppLayout';
-import './globals.css';
-import { ThemeProvider } from '../lib/ThemeContext';
-import { DataProvider } from '../lib/DataContext';
-import Script from 'next/script';
 import ServiceWorkerRegister from '../components/ServiceWorkerRegister';
+import { ThemeProvider } from '../lib/ThemeContext';
 import { AppProviders } from '@/contexts/AppProviders';
+import './globals.css';
 
-// Configuração da fonte principal (Inter)
-const inter = Inter({
+// Fonte principal da interface
+const geist = Geist({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-geist',
 });
 
-// Configuração da fonte secundária (Merriweather) para títulos
-const merriweather = Merriweather({
+// Fonte de destaque para valores e títulos grandes
+const instrument = Instrument_Serif({
   subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-merriweather',
+  weight: '400',
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-instrument',
 });
 
 export const metadata = {
   title: 'Aeris Finanças',
   description: 'Seu app de finanças pessoais.',
+  appleWebApp: { capable: true, title: 'Aeris', statusBarStyle: 'default' },
 };
 
-// Adicione este novo objeto 'viewport' exportado
 export const viewport = {
-  themeColor: '#d95f43',
+  themeColor: '#12100f',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className={`${geist.variable} ${instrument.variable}`} suppressHydrationWarning>
       <body>
         {/* Aplica o tema salvo antes do React carregar, evitando o "flicker" do tema */}
-        <Script id='theme-switcher' strategy='beforeInteractive'>
-          {`document.documentElement.classList.add(window.localStorage.getItem('theme') || 'dark');`}
+        <Script id="theme-switcher" strategy="beforeInteractive">
+          {`try{document.documentElement.classList.add(localStorage.getItem('theme')||'dark')}catch(e){document.documentElement.classList.add('dark')}`}
         </Script>
         <ServiceWorkerRegister />
         <ThemeProvider>
-          <DataProvider> {/* Envolva com o DataProvider */}
-            <div className={`${inter.className} ${inter.variable} ${merriweather.variable}`}>
-            <AppProviders> {/* 2. Use o AppProviders para envolver tudo */}
+          <AppProviders>
+            <div className="app-root">
               <Header />
-              <AppLayout>
-                <main className='main-content'>{children}</main>
-              </AppLayout>
-              </AppProviders>
+              <AppLayout>{children}</AppLayout>
             </div>
-          </DataProvider>
+          </AppProviders>
         </ThemeProvider>
       </body>
     </html>

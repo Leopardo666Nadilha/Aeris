@@ -1,249 +1,93 @@
-.container {
-  margin: 0 auto;
-}
-
-.title {
-  font-size: 2rem;
-  color: var(--color-primary);
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.backButton {
+.toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.3s ease;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
-.backButton:hover {
-  color: var(--color-accent);
+.monthSelect {
+  width: auto;
+  min-width: 200px;
+  min-height: 40px;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
 }
 
-.filterContainer {
-  display: flex;
-  align-items: center;
+@media (max-width: 480px) {
+  .toolbar > * {
+    width: 100%;
+  }
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
-  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
-.filterContainer label {
-  font-weight: 500;
+@media (max-width: 559px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summaryItem:last-child {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
 }
 
-.monthFilter {
-  padding: 0.5rem 0.75rem;
+.summaryItem {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background-color: var(--color-card-background);
-  color: var(--color-text);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.9rem;
-  cursor: pointer;
+  border-radius: var(--radius);
+  background: var(--color-surface);
 }
 
-.monthFilter:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+.summaryItem span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
-.transactionList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
+.summaryItem strong {
+  overflow: hidden;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
 }
 
-.transactionItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--color-card-background);
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+@media (min-width: 768px) {
+  .summaryItem strong {
+    font-size: 1.1rem;
+  }
 }
 
-.transactionItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--color-card-background);
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+.negative {
+  color: var(--color-expense);
 }
 
-.transactionItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+.group + .group {
+  margin-top: 1.25rem;
 }
 
-.transactionDetails {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex-shrink: 1; /* Permite que este item encolha */
-  min-width: 0; /* Permite que encolha abaixo do tamanho do conteúdo */
-}
-
-.transactionLabel {
+.groupTitle {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
 }
 
-.transactionDate {
-  font-size: 0.85rem;
-  color: var(--color-accent);
-}
-
-.expenseValue {
-  font-weight: 700;
-  color: var(--color-balance-negative);
-  font-size: 15px;
-  white-space: nowrap; /* Impede que o texto quebre a linha */
-}
-
-.incomeValue {
-  font-weight: 700;
-  color: var(--color-accent);
-  font-size: 15px;
-  white-space: nowrap; /* Impede que o texto quebre a linha */
-}
-
-.noTransactions {
-  text-align: center;
-  padding: 3rem 1rem;
-  background-color: var(--color-card-background);
-  border-radius: 12px;
-  color: var(--color-accent);
-}
-
-.noTransactions p {
-  margin: 0.5rem 0;
-}
-
-/* Adicionado para separar os detalhes das ações */
-.transactionInfo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-grow: 1; /* Faz esta parte ocupar o espaço disponível */
-}
-
-/* Container para os botões de ação */
-.transactionActions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-left: 1.5rem; /* Espaçamento entre os detalhes e os botões */
-}
-
-.actionButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  padding: 0.5rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.actionButton:hover {
-  background-color: var(--color-hover-background);
-  color: var(--color-primary);
-}
-
-.deleteButton:hover {
-  color: var(--color-balance-negative);
-}
-
-/* Estilos para o formulário dentro do modal */
-.modalForm {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.formGroup {
-  display: flex;
-  flex-direction: column;
-}
-
-.formGroup label {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--color-text);
-}
-
-.formGroup input,
-.formGroup select {
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: var(--color-background);
-  color: var(--color-text);
-}
-
-/* Estilos para o conteúdo e ações do modal de confirmação */
-.modalContent p {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  color: var(--color-text-secondary);
-  text-align: center;
-}
-
-.modalActions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 16px;
-}
-
-.warningText {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  text-align: center;
-}
-
-/* Estilos para os botões dentro dos modais (ADICIONADO) */
-.modalButton {
-  padding: 13.6px 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-  border: 2px solid var(--color-border); /* Borda padrão */
-}
-
-.cancelButton {
-  background-color: var(--color-background); /* Cor de fundo mais clara */
-  color: var(--color-text); /* Cor do texto padrão */
-  border-color: var(--color-border); /* Borda sutil */
-}
-
-.cancelButton:hover {
-  background-color: var(--color-hover-background); /* Efeito hover */
-  border-color: var(--color-primary); /* Borda primária no hover */
-}
-
-.cancelButtonBudget {
-  margin-top: 24px;
-}
-
-.cancelButtonExclude {
-  margin-top: 16px;
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }

@@ -1,102 +1,98 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useMemo } from 'react';
-import { donutGraphColors } from '../lib/theme.js'; // 1. Importa a paleta de cores
-import { useCurrency } from '@/contexts/CurrencyContext'; // Importe o hook de moeda
-import * as d3 from 'd3';
+import { useMemo, useState } from 'react';
+import { arc as d3Arc, pie as d3Pie } from 'd3';
+import { donutGraphColors } from '../lib/theme.js';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import styles from './DonutGraph.module.css';
 
+const SIZE = 220;
+const RADIUS = SIZE / 2;
+const INNER = RADIUS * 0.72;
+
+/**
+ * Gráfico de rosca dos gastos por categoria, com legenda interativa.
+ * `data`: [{ category_name, value }] já agregado e ordenado.
+ */
 export default function DonutGraph({ data }) {
-  const ref = useRef();
-  const { formatCurrency } = useCurrency(); // Use o hook de moeda
-  const [selectedSlice, setSelectedSlice] = useState(null);
+  const { formatCurrency } = useCurrency();
+  const [selected, setSelected] = useState(null);
 
-  // Calcula o total de gastos uma única vez ou quando os dados mudam
-  const totalGastos = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
-  // Sem gastos não há fatia para destacar
-  const activeSlice = totalGastos === 0 ? null : selectedSlice;
+  const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
+  const slices = useMemo(() => {
+    const pie = d3Pie()
+      .value((d) => d.value)
+      .sort(null)
+      .padAngle(data.length > 1 ? 0.025 : 0);
+    const arc = d3Arc().innerRadius(INNER).outerRadius(RADIUS - 6).cornerRadius(4);
+    const arcActive = d3Arc().innerRadius(INNER - 2).outerRadius(RADIUS).cornerRadius(4);
+    return pie(data).map((d, i) => ({
+      ...d.data,
+      color: donutGraphColors[i % donutGraphColors.length],
+      path: arc(d),
+      activePath: arcActive(d),
+    }));
+  }, [data]);
 
-  // Efeito para desenhar o gráfico
-  useEffect(() => {
-    const svg = d3.select(ref.current);
-    svg.selectAll('*').remove();
+  // A seleção é descartada se a categoria deixar de existir nos dados
+  const active = slices.find((s) => s.category_name === selected) ?? null;
+  const toggle = (name) => setSelected((prev) => (prev === name ? null : name));
 
-    const width = 280;
-    const height = 280;
-    const margin = 20;
-    const radius = Math.min(width, height) / 2 - margin;
-
-    const g = svg.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`);
-
-    // Se não houver dados ou o total for 0, desenha o placeholder
-    if (totalGastos === 0) { // Simplificado para verificar apenas o totalGastos
-      // Desenha um único arco para simular o donut vazio
-      const emptyPie = d3.pie().value(1)([{}]); // Cria uma fatia de 360 graus
-      const emptyArc = d3.arc().innerRadius(radius * 0.65).outerRadius(radius);
-
-      g.selectAll('path')
-        .data(emptyPie)
-        .enter()
-        .append('path')
-        .attr('d', emptyArc)
-        .attr('fill', 'var(--color-donut-no-data)'); // Usa a cor neutra definida no globals.css
-      return; // Encerra a função para não desenhar o gráfico de donut
-    }
-
-    // Esquema de cores consistente
-    const color = d3.scaleOrdinal(donutGraphColors);
-
-    const pie = d3.pie().value((d) => d.value);
-    const data_ready = pie(data.filter(d => d.value > 0)); // Filtra valores > 0 para o gráfico
-
-    // Arco padrão
-    const arc = d3.arc().innerRadius(radius * 0.65).outerRadius(radius);
-
-    // Arco para a fatia selecionada (efeito de "explodir")
-    const arcSelected = d3.arc().innerRadius(radius * 0.65).outerRadius(radius * 1.08);
-
-    g.selectAll('path')
-      .data(data_ready)
-      .enter()
-      .append('path')
-      .attr('d', (d) => (activeSlice && activeSlice.category_name === d.data.category_name ? arcSelected(d) : arc(d)))
-      .attr('fill', (d) => color(d.data.category_name))
-      .attr('class', styles.donutSlice)
-      .on('click', (event, d) => {
-        // Alterna a seleção da fatia
-        if (activeSlice && activeSlice.category_name === d.data.category_name) {
-          setSelectedSlice(null);
-        } else {
-          setSelectedSlice(d.data);
-        }
-      });
-
-  }, [data, totalGastos, activeSlice]);
+  const emptyPath = d3Arc().innerRadius(INNER).outerRadius(RADIUS - 6)({ startAngle: 0, endAngle: Math.PI * 2 });
 
   return (
-    <div className={styles.graphContainer}>
-      <svg ref={ref} width={280} height={280}></svg>
-      {/* Área de informação em linha única */}
-      <div className={styles.infoBox}>
-        {totalGastos === 0 ? (
-          // Se o total de gastos é 0, mostra a mensagem padrão
-          <p className={styles.infoText}>Total de gastos: {formatCurrency(0)}</p>
-        ) : (
-          activeSlice ? (
-            // Se uma fatia está selecionada e há gastos
-            <p className={styles.infoText}>
-              Gastos com <strong>{activeSlice.category_name}</strong>: {formatCurrency(activeSlice.value)}
-            </p>
-          ) : (
-            // Caso contrário (há gastos, mas nenhuma fatia selecionada), mostra o total
-            <p className={styles.infoText}>
-              Total de gastos: {formatCurrency(totalGastos)}
-            </p>
-          )
-        )}
+    <div className={styles.wrapper}>
+      <div className={styles.chart}>
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="Gastos por categoria">
+          <g transform={`translate(${RADIUS}, ${RADIUS})`}>
+            {total === 0 ? (
+              <path d={emptyPath} fill="var(--color-donut-no-data)" />
+            ) : (
+              slices.map((s) => (
+                <path
+                  key={s.category_name}
+                  d={active?.category_name === s.category_name ? s.activePath : s.path}
+                  fill={s.color}
+                  className={`${styles.slice} ${active && active.category_name !== s.category_name ? styles.dimmed : ''}`}
+                  onClick={() => toggle(s.category_name)}
+                >
+                  <title>{`${s.category_name}: ${formatCurrency(s.value)}`}</title>
+                </path>
+              ))
+            )}
+          </g>
+        </svg>
+        <div className={styles.center}>
+          <span className={styles.centerLabel}>{active ? active.category_name : 'Total'}</span>
+          <span className={styles.centerValue}>{formatCurrency(active ? active.value : total)}</span>
+          {active && total > 0 && (
+            <span className={styles.centerPercent}>{Math.round((active.value / total) * 100)}% dos gastos</span>
+          )}
+        </div>
       </div>
+
+      {total === 0 ? (
+        <p className={styles.empty}>Nenhum gasto neste período. Use o botão + para registrar o primeiro.</p>
+      ) : (
+        <ul className={styles.legend}>
+          {slices.map((s) => (
+            <li key={s.category_name}>
+              <button
+                type="button"
+                className={`${styles.legendItem} ${active?.category_name === s.category_name ? styles.legendActive : ''}`}
+                onClick={() => toggle(s.category_name)}
+                aria-pressed={active?.category_name === s.category_name}
+              >
+                <span className={styles.dot} style={{ background: s.color }} aria-hidden="true" />
+                <span className={styles.legendName}>{s.category_name}</span>
+                <span className={styles.legendPercent}>{Math.round((s.value / total) * 100)}%</span>
+                <span className={styles.legendValue}>{formatCurrency(s.value)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -1,32 +1,22 @@
-.progressBarContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.track {
   width: 100%;
-}
-
-.progressBarBackground {
-  flex-grow: 1;
-  height: 12px;
-  background-color: var(--color-border);
-  border-radius: 6px;
+  height: 8px;
   overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
 }
 
-.progressBarFill {
+.fill {
   height: 100%;
-  background-color: var(--color-primary);
-  border-radius: 6px;
-  transition: width 0.5s ease-out;
+  border-radius: inherit;
+  background: var(--color-income);
+  transition: width 0.6s var(--ease-out), background-color 0.2s ease;
 }
 
-/* Nova classe para quando a meta é ultrapassada */
-.exceeded {
-  background-color: #e53e3e; /* Tom de vermelho para alerta */
+.near {
+  background: var(--color-warning);
 }
 
-.progressText {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text);
+.over {
+  background: var(--color-expense);
 }

@@ -1,48 +1,145 @@
-.balanceCard {
-  background-color: var(--color-balance-card);
-  color: var(--color-text); /* Cor do texto principal do card */
-  padding: 2rem;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin: 2rem auto;
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  cursor: pointer; /* Adiciona o cursor de ponteiro para indicar que é clicável */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-hero-bg);
+  color: var(--color-hero-text);
+  box-shadow: var(--shadow-md);
+  isolation: isolate;
 }
 
-/* Estilo para o Link que envolve o card */
-.balanceCardLink {
-  text-decoration: none; /* Remove o sublinhado padrão do link */
-  display: block; /* Garante que o link ocupe toda a área do card */
-  border-radius: 12px; /* Garante que o anel de foco siga as bordas arredondadas */
+:global(.dark) .card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Efeito de foco: um anel sutil com a cor primária */
-.balanceCardLink:focus-visible .balanceCard {
-  box-shadow: 0 0 0 3px var(--color-primary);
+@media (min-width: 768px) {
+  .card {
+    padding: 2rem;
+  }
 }
 
-/* Efeito de hover: elevação e sombra mais forte */
-.balanceCardLink:hover .balanceCard {
-  transform: translateY(-5px); /* Efeito de "elevação" no hover */
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Sombra mais pronunciada no hover */
+.glow {
+  position: absolute;
+  inset: -40% -20% auto auto;
+  z-index: -1;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(236, 120, 88, 0.55), rgba(236, 120, 88, 0) 65%);
+  filter: blur(10px);
+  pointer-events: none;
 }
 
-.balanceLabel {
-  margin: 0;
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-hero-muted);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-hero-text);
+  transition: background-color 0.18s ease;
+}
+
+.link:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.balance {
+  margin: 0.5rem 0 1.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 11vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.negative {
+  color: #ff9a8b;
+}
+
+.month {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.monthLabel {
+  display: block;
+  margin-bottom: 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-hero-muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.stat > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.statIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 11px;
   font-size: 1rem;
-  opacity: 0.9;
-  color: var(--color-text);
 }
 
-.balanceCard h1 {
-  margin: 0.5rem 0 0 0;
-  font-size: 2.5rem;
-  /* A fonte Merriweather já é aplicada globalmente, mas podemos ser explícitos se quisermos */
-  font-family: var(--font-merriweather), serif;
-  color: var(--color-balance);
+.in {
+  background: rgba(98, 196, 142, 0.18);
+  color: #7fd6a5;
+}
+
+.out {
+  background: rgba(255, 154, 139, 0.16);
+  color: #ffab9e;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: var(--color-hero-muted);
+}
+
+.statValue {
+  overflow: hidden;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -2,54 +2,39 @@
 
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
-const ThemeContext = createContext();
+const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} });
+
+const readThemeFromDom = () =>
+  typeof document !== 'undefined' && !document.documentElement.classList.contains('dark') ? 'light' : 'dark';
 
 export function ThemeProvider({ children }) {
-  // Inicializa o estado do tema lendo do DOM (que já foi setado pelo script de tema no layout)
-  // ou um valor padrão para SSR.
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const root = document.documentElement;
-      // Lê a classe aplicada pelo script de tema ou assume 'dark' como padrão
-      return root.classList.contains('dark') ? 'dark' : 'light';
-    }
-    return 'dark'; // Tema padrão para SSR ou quando window não está disponível
-  });
+  // O script do layout já aplicou a classe no <html>; partimos dela.
+  // Componentes que dependem do tema na renderização devem preferir CSS
+  // (classes .theme-icon-*) para não divergir do HTML gerado no servidor.
+  const [theme, setTheme] = useState(readThemeFromDom);
 
-  // Este efeito lida com todos os efeitos colaterais quando o estado 'theme' muda
   useEffect(() => {
-    if (typeof window !== 'undefined' && theme) { // Garante que estamos no cliente e o tema está definido
-      const root = document.documentElement;
-      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
 
-      // 1. Atualiza a classe no elemento <html>
-      root.classList.remove('light', 'dark');
-      root.classList.add(theme);
+    // Mantém a cor da barra do navegador alinhada ao fundo do tema
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const bg = getComputedStyle(root).getPropertyValue('--color-bg').trim();
+    if (meta && bg) meta.setAttribute('content', bg);
 
-      // 2. Atualiza a meta tag theme-color
-      const rootStyles = getComputedStyle(root); // Pega os estilos computados APÓS a classe ser aplicada
-      const newColor = rootStyles.getPropertyValue('--color-primary').trim();
-      if (metaThemeColor && newColor) {
-        metaThemeColor.setAttribute('content', newColor);
-      }
-
-      // 3. Salva a preferência no localStorage (adiado para otimização de INP)
-      setTimeout(() => {
-        localStorage.setItem('theme', theme);
-      }, 0);
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      // localStorage indisponível (modo privado etc.)
     }
-  }, [theme]); // Este efeito será reexecutado sempre que o estado 'theme' mudar
+  }, [theme]);
 
-  // Função para alternar o tema - agora ela apenas atualiza o estado
   const toggleTheme = useCallback(() => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-  }, []); // useCallback para memorizar a função e evitar re-renderizações desnecessárias
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  }, []);
 
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export const useTheme = () => useContext(ThemeContext);

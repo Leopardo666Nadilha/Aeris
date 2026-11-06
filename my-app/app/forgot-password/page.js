@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import styles from '../login/Login.module.css'; // Reutilizando o estilo do login
+import AuthShell from '../../components/AuthShell';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -22,13 +22,8 @@ export default function ForgotPasswordPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Algo deu errado.');
-      }
-
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Algo deu errado.');
       setMessage(data.message);
     } catch (err) {
       setError(err.message);
@@ -38,37 +33,43 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <section className={styles.container}>
-      <div className={styles.formContainer}>
-        <h1 className={styles.title}>Redefinir Senha</h1>
-        <p className={styles.subtitle}>
-          Digite seu e-mail para receber as instruções de redefinição.
-        </p>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formGroup}>
-            <label htmlFor="email">E-mail</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          {error && <p className={styles.error}>{error}</p>}
-          {message && <p className={styles.message}>{message}</p>}
-
-          <button type="submit" className={styles.submitButton} disabled={isLoading}>
-            {isLoading ? 'Enviando...' : 'Enviar'}
-          </button>
-        </form>
-        <div className={styles.registerPrompt}>
-          <Link href="/login" className={styles.link}>
-            Voltar para o Login
-          </Link>
+    <AuthShell
+      title="Esqueceu a senha?"
+      subtitle="Informe seu e-mail e enviaremos um link para criar uma nova."
+      footer={
+        <Link href="/login" className="link">
+          Voltar para o login
+        </Link>
+      }
+    >
+      <form onSubmit={handleSubmit} className="form">
+        <div className="field">
+          <label className="field-label" htmlFor="email">
+            E-mail
+          </label>
+          <input
+            className="input"
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            placeholder="voce@exemplo.com"
+            required
+          />
         </div>
-      </div>
-    </section>
+
+        {error && (
+          <p className="alert alert-error" role="alert">
+            {error}
+          </p>
+        )}
+        {message && <p className="alert alert-success">{message}</p>}
+
+        <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
+          {isLoading ? 'Enviando…' : 'Enviar link'}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

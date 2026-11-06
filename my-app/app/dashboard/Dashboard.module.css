@@ -1,79 +1,67 @@
-.container {
-  position: relative; /* Torna este o contêiner de referência */
-  margin: 0 auto; /* Centraliza o container na página */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
 }
 
-/* Estilos para o botão de voltar */
-.backButton {
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 1.25rem;
+  }
+
+  .summary {
+    position: sticky;
+    top: calc(var(--header-height) + 2rem);
+  }
+}
+
+.summary {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--color-primary);
-  text-decoration: none;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.summaryValue {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 8vw, 2.8rem);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryValue span {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 0.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.stats dt {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.stats dd {
+  margin: 0.15rem 0 0;
   font-weight: 600;
-  transition: color 0.3s ease;
-  margin-bottom: 1rem;
+  font-variant-numeric: tabular-nums;
 }
 
-.backButton:hover {
-  color: var(--color-accent);
+.negative {
+  color: var(--color-expense);
 }
 
-.title {
-  font-size: 32px;
-  margin-bottom: 1rem;
-  color: var(--color-primary);
-  text-align: center;
-}
-
-.description {
-  font-size: 24px;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-  color: var(--color-text);
-  text-align: center;
-}
-
-/* Estilos para a seção de resumo */
-.summarySection {
-  max-width: 600px; /* Define uma largura máxima para a seção de resumo */
-  width: 100%;
-  margin: 2rem auto 1.5rem auto; /* Centraliza a seção e adiciona margens verticais */
-  margin-top: 2rem;
-}
-
-.summarySection h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.summaryItem {
-  background-color: var(--color-card-background);
-  padding: 14px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1rem;
-}
-
-.summaryInfo {
+.list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.summaryCategoryName {
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.summaryValues {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-}
-
-.dashboardButton {
-  max-width: 600px; /* Mesma largura máxima da seção de resumo */
-  margin: auto;
+  flex-direction: column;
+  gap: 1.4rem;
 }

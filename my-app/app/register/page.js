@@ -2,124 +2,141 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import styles from './Register.module.css';
-import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase'; // Importe o cliente Supabase
+import { LuMail } from 'react-icons/lu';
+import AuthShell from '../../components/AuthShell';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const form = new FormData(e.currentTarget);
+    const name = String(form.get('name') || '').trim();
+    const email = String(form.get('email') || '').trim();
+    const password = String(form.get('password') || '');
 
-    if (password !== confirmPassword) {
-      setError('As senhas não coincidem!');
-      return;
-    }
+    if (password.length < 6) return setError('A senha deve ter pelo menos 6 caracteres.');
+    if (password !== form.get('confirmPassword')) return setError('As senhas não coincidem.');
 
     setLoading(true);
     try {
+      const supabase = createSupabaseBrowserClient();
       const { error: signUpError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            full_name: name,
-          },
-        },
+        email,
+        password,
+        options: { data: { full_name: name } },
       });
-
       if (signUpError) throw signUpError;
-
-      alert('Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta.');
-      router.push('/login'); // Redireciona para o login após o cadastro
-    } catch (error) {
-      setError(error.message);
+      setRegisteredEmail(email);
+    } catch (err) {
+      setError(err.message || 'Não foi possível concluir o cadastro.');
     } finally {
       setLoading(false);
     }
   };
 
+  if (registeredEmail) {
+    return (
+      <AuthShell
+        title="Confira seu e-mail"
+        footer={
+          <Link href="/login" className="btn btn-primary btn-block">
+            Ir para o login
+          </Link>
+        }
+      >
+        <div className="alert alert-success" style={{ display: 'flex', gap: '0.6rem' }}>
+          <LuMail aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>
+            Enviamos um link de confirmação para <strong>{registeredEmail}</strong>. Confirme o cadastro e depois faça
+            login.
+          </span>
+        </div>
+      </AuthShell>
+    );
+  }
+
   return (
-    <div className={styles.container}>
-      <div className={styles.registerBox}>
-        <h1 className={styles.title}>Cadastro</h1>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.inputGroup}>
-            <label htmlFor="name" className={styles.label}>
-              Nome
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              required
-              className={styles.input}
-              placeholder="Seu nome completo"
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <label htmlFor="email" className={styles.label}>
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              className={styles.input}
-              placeholder="seuemail@exemplo.com"
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <label htmlFor="password" className={styles.label}>
+    <AuthShell
+      title="Crie sua conta"
+      subtitle="Leva menos de um minuto."
+      footer={
+        <span>
+          Já tem uma conta?{' '}
+          <Link href="/login" className="link">
+            Entrar
+          </Link>
+        </span>
+      }
+    >
+      <form onSubmit={handleSubmit} className="form">
+        <div className="field">
+          <label className="field-label" htmlFor="name">
+            Nome
+          </label>
+          <input className="input" type="text" id="name" name="name" autoComplete="name" placeholder="Seu nome" required />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="email">
+            E-mail
+          </label>
+          <input
+            className="input"
+            type="email"
+            id="email"
+            name="email"
+            autoComplete="email"
+            placeholder="voce@exemplo.com"
+            required
+          />
+        </div>
+        <div className="form-row">
+          <div className="field">
+            <label className="field-label" htmlFor="password">
               Senha
             </label>
             <input
+              className="input"
               type="password"
               id="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
+              name="password"
+              autoComplete="new-password"
+              minLength={6}
               required
-              className={styles.input}
-              placeholder="Crie uma senha"
             />
           </div>
-          <div className={styles.inputGroup}>
-            <label htmlFor="confirmPassword" className={styles.label}>
-              Confirmar Senha
+          <div className="field">
+            <label className="field-label" htmlFor="confirmPassword">
+              Confirmar
             </label>
             <input
+              className="input"
               type="password"
               id="confirmPassword"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              name="confirmPassword"
+              autoComplete="new-password"
               required
-              className={styles.input}
-              placeholder="Confirme sua senha"
             />
           </div>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <button type="submit" className="cta-button" disabled={loading}>
-            {loading ? 'Cadastrando...' : 'Cadastrar'}
-          </button>
-        </form>
-        <p className={styles.loginText}>
-          Já tem uma conta?{' '}
-          <Link href="/login" className={styles.loginLink}>
-            Faça login
-          </Link>
-        </p>
-      </div>
-    </div>
+        </div>
+        <span className="field-hint" style={{ marginTop: '-0.5rem' }}>
+          Mínimo de 6 caracteres.
+        </span>
+
+        {error && (
+          <p className="alert alert-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+          {loading ? 'Criando conta…' : 'Criar conta'}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

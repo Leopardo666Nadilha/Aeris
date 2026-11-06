@@ -1,26 +1,21 @@
 import styles from './ProgressBar.module.css';
 
-export default function ProgressBar({ current, goal }) {
-  // Calcula a porcentagem do progresso, permitindo ultrapassar 100%
+/** Barra de progresso do orçamento: muda de cor perto (≥ 85%) e acima do limite. */
+export default function ProgressBar({ current, goal, label }) {
   const percentage = goal > 0 ? (current / goal) * 100 : 0;
-
-  // Define a largura da barra, limitada a 100% para não quebrar o layout visual
-  const barWidth = Math.min(percentage, 100);
-
-  // Define a classe da barra de preenchimento com base no progresso
-  const fillClassName = percentage > 100 ? `${styles.progressBarFill} ${styles.exceeded}` : styles.progressBarFill;
+  const width = Math.min(percentage, 100);
+  const status = percentage > 100 ? styles.over : percentage >= 85 ? styles.near : '';
 
   return (
-    <div className={styles.progressBarContainer}>
-      <div className={styles.progressBarBackground}>
-        <div
-          className={fillClassName}
-          style={{ width: `${barWidth}%` }}
-        ></div>
-      </div>
-      <span className={styles.progressText}>
-        {percentage.toFixed(0)}%
-      </span>
+    <div
+      className={styles.track}
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(Math.min(percentage, 100))}
+      aria-label={label}
+    >
+      <div className={`${styles.fill} ${status}`} style={{ width: `${width}%` }} />
     </div>
   );
 }

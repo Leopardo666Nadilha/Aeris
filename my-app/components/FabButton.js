@@ -1,11 +1,13 @@
 'use client';
+
+import { LuPlus } from 'react-icons/lu';
 import styles from './FabButton.module.css';
-import { MdAdd } from 'react-icons/md';
 
 export default function FabButton({ onClick }) {
   return (
-    <button className={styles.fab} onClick={onClick} aria-label='Adicionar novo item'>
-      <MdAdd size={24} />
+    <button type="button" className={styles.fab} onClick={onClick} aria-label="Adicionar gasto ou recebimento">
+      <LuPlus aria-hidden="true" />
+      <span className={styles.label}>Adicionar</span>
     </button>
   );
 }

@@ -1,34 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation'; // 1. Importe o hook usePathname
-import { useData } from '../lib/DataContext'; // Importe o hook de dados
+import { usePathname } from 'next/navigation';
+import { useData } from '../lib/DataContext';
+import { isAuthPath } from '../lib/routes';
 import FabButton from './FabButton';
 import BottomSheet from './BottomSheet';
 
 export default function AppLayout({ children }) {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const { budgets, addTransaction, addIncome } = useData(); // Obtenha os dados e as funções do contexto
-  const pathname = usePathname(); // 2. Obtenha a rota atual
+  const { budgets, addTransaction, addIncome } = useData();
+  const pathname = usePathname();
 
-  // 3. Defina as rotas onde os componentes NÃO devem aparecer
-  const excludedPaths = ['/perfil', '/login', '/register'];
-
-  // 4. Verifique se a rota atual está na lista de exclusão
-  const shouldShowComponents = !excludedPaths.includes(pathname);
+  const isAuth = isAuthPath(pathname);
+  // O botão de adicionar fica fora das páginas de autenticação e do perfil
+  const showFab = !isAuth && pathname !== '/perfil';
 
   return (
     <>
-      {children}
+      <main className={`main-content ${isAuth ? 'is-auth' : ''}`}>{children}</main>
 
-      {/* 5. Renderize os componentes apenas se a condição for verdadeira */}
-      {shouldShowComponents && (
+      {showFab && (
         <>
           <FabButton onClick={() => setIsBottomSheetOpen(true)} />
           <BottomSheet
             isOpen={isBottomSheetOpen}
             onClose={() => setIsBottomSheetOpen(false)}
-            categories={budgets} // Passa a lista de budgets como categorias
+            categories={budgets}
             onSaveTransaction={addTransaction}
             onSaveIncome={addIncome}
           />
